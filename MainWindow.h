@@ -18,6 +18,8 @@
 #include <QTextEdit>
 #include <QElapsedTimer>
 #include <QTime>
+#include <QRadioButton>
+#include <QButtonGroup>
 #include "settings.h"
 
 QT_BEGIN_NAMESPACE
@@ -76,5 +78,7 @@ private:
     bool m_isQuitting = false;
     QCheckBox *m_sudoCheckBox;
     QCheckBox *m_clearOutputCheckBox;
+    QMap<QString, QList<QWidget*>> m_exclusiveGroupWidgets;
+    QMap<QString, QButtonGroup*> m_buttonGroups;
 };
 #endif // MAINWINDOW_H

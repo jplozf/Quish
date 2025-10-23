@@ -296,6 +296,11 @@ void MainWindow::on_cmbCommands_currentIndexChanged(int index)
 void MainWindow::buildUi(const QJsonObject &config)
 {
     clearForm();
+    m_exclusiveGroupWidgets.clear();
+    for (QButtonGroup* group : m_buttonGroups.values()) {
+        delete group;
+    }
+    m_buttonGroups.clear();
 
     if (!config.contains("arguments") || !config["arguments"].isArray()) {
         return;
@@ -320,9 +325,23 @@ void MainWindow::buildUi(const QJsonObject &config)
         QJsonObject arg = value.toObject();
         QString name = arg["name"].toString();
         QString type = arg["type"].toString();
+        QString exclusiveGroup = arg["exclusive_group"].toString();
 
         QLabel *label = new QLabel(name, this);
-        if (type == "file" || type == "folder") {
+
+        if (type == "boolean" && !exclusiveGroup.isEmpty()) {
+            QRadioButton *radioButton = new QRadioButton(name, this);
+            layout->addRow(radioButton);
+            radioButton->setProperty("argType", type);
+            radioButton->setProperty("argFlag", arg["flag"].toString());
+            radioButton->setProperty("exclusiveGroup", exclusiveGroup);
+
+            if (!m_buttonGroups.contains(exclusiveGroup)) {
+                m_buttonGroups.insert(exclusiveGroup, new QButtonGroup(this));
+            }
+            m_buttonGroups[exclusiveGroup]->addButton(radioButton);
+            m_exclusiveGroupWidgets[exclusiveGroup].append(radioButton);
+        } else if (type == "file" || type == "folder") {
             QWidget *widget = new QWidget(this);
             QHBoxLayout *hLayout = new QHBoxLayout(widget);
             QLineEdit *lineEdit = new QLineEdit(this);
@@ -350,17 +369,26 @@ void MainWindow::buildUi(const QJsonObject &config)
             }
             widget->setProperty("argType", type);
             widget->setProperty("argFlag", arg["flag"].toString());
+            widget->setProperty("argName", name);
         } else if (type == "string" || type == "raw_string") {
             QLineEdit *lineEdit = new QLineEdit(this);
             layout->addRow(label, lineEdit);
             lineEdit->setProperty("argType", type);
             lineEdit->setProperty("argFlag", arg["flag"].toString());
+            lineEdit->setProperty("argName", name);
         } else if (type == "integer") {
             QSpinBox *spinBox = new QSpinBox(this);
             spinBox->setRange(-999999, 999999);
             layout->addRow(label, spinBox);
             spinBox->setProperty("argType", type);
             spinBox->setProperty("argFlag", arg["flag"].toString());
+            spinBox->setProperty("argName", name);
+        } else if (type == "boolean") { // Handle boolean without exclusive group
+            QCheckBox *checkBox = new QCheckBox(name, this);
+            layout->addRow(checkBox);
+            checkBox->setProperty("argType", type);
+            checkBox->setProperty("argFlag", arg["flag"].toString());
+            checkBox->setProperty("argName", name);
         }
     }
 }
@@ -397,42 +425,85 @@ void MainWindow::on_btnRun_clicked()
             
         
                 QFormLayout *formLayout = qobject_cast<QFormLayout*>(ui->scrollAreaWidgetContents->layout());        QJsonArray configArgs = m_currentConfig["arguments"].toArray();
-    
-        for (int i = 0; i < formLayout->rowCount(); ++i) {
-            QLayoutItem *labelItem = formLayout->itemAt(i, QFormLayout::LabelRole);
-            QLayoutItem *fieldItem = formLayout->itemAt(i, QFormLayout::FieldRole);
-            if (!labelItem || !fieldItem) continue;
-    
-            QLabel *label = qobject_cast<QLabel*>(labelItem->widget());
-            QWidget *fieldWidget = fieldItem->widget();
-            if (!label || !fieldWidget) continue;
-    
-            QString flag = fieldWidget->property("argFlag").toString();
-            QString type = fieldWidget->property("argType").toString();
-            QString value;
-    
-            if (QLineEdit *lineEdit = qobject_cast<QLineEdit*>(fieldWidget)) {
-                value = lineEdit->text();
-            } else if (QSpinBox *spinBox = qobject_cast<QSpinBox*>(fieldWidget)) {
-                value = QString::number(spinBox->value());
-            } else if (QWidget *container = qobject_cast<QWidget*>(fieldWidget)) {
-                QLineEdit* lineEdit = container->findChild<QLineEdit*>();
-                if(lineEdit) {
-                    value = lineEdit->text();
-                }            
-            }
-    
-            if (!flag.isEmpty()) {
-                commandLine += " " + flag;
-            }
-            if (!value.isEmpty()) {
-                if (type == "raw_string") {
-                    commandLine += " " + value;
-                } else {
-                    if (value.contains(' ')) {
-                        commandLine += " \"" + value + "\"";
-                    } else {
-                        commandLine += " " + value;
+
+        for (const QJsonValue &value : configArgs) {
+            QJsonObject arg = value.toObject();
+            QString name = arg["name"].toString();
+            QString type = arg["type"].toString();
+            QString flag = arg["flag"].toString();
+            QString exclusiveGroup = arg["exclusive_group"].toString();
+
+            if (type == "boolean") {
+                if (!exclusiveGroup.isEmpty()) {
+                    if (m_buttonGroups.contains(exclusiveGroup)) {
+                        QAbstractButton *checkedButton = m_buttonGroups[exclusiveGroup]->checkedButton();
+                        if (checkedButton && checkedButton->property("argFlag").toString() == flag) {
+                            commandLine += " " + flag;
+                        }
+                    }
+                } else { // Non-exclusive boolean (checkbox)
+                    // Find the QCheckBox by its flag or name
+                    QList<QCheckBox*> checkBoxes = ui->scrollAreaWidgetContents->findChildren<QCheckBox*>();
+                    for (QCheckBox *checkBox : checkBoxes) {
+                        if (checkBox->property("argFlag").toString() == flag && checkBox->isChecked()) {
+                            commandLine += " " + flag;
+                            break;
+                        }
+                    }
+                }
+            } else { // string, integer, file, folder
+                // Find the corresponding widget in the form layout
+                QWidget *fieldWidget = nullptr;
+                for (int i = 0; i < formLayout->rowCount(); ++i) {
+                    QLayoutItem *fieldItem = formLayout->itemAt(i, QFormLayout::FieldRole);
+                    if (fieldItem && fieldItem->widget()) {
+                        if (!flag.isEmpty() && fieldItem->widget()->property("argFlag").toString() == flag) {
+                            fieldWidget = fieldItem->widget();
+                            break;
+                        } else if (flag.isEmpty() && fieldItem->widget()->property("argName").toString() == name) {
+                            fieldWidget = fieldItem->widget();
+                            break;
+                        } else if (QWidget *container = qobject_cast<QWidget*>(fieldItem->widget())) {
+                            QLineEdit* lineEdit = container->findChild<QLineEdit*>();
+                            if (lineEdit) {
+                                if (!flag.isEmpty() && container->property("argFlag").toString() == flag) {
+                                    fieldWidget = container;
+                                    break;
+                                } else if (flag.isEmpty() && container->property("argName").toString() == name) {
+                                    fieldWidget = container;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (fieldWidget) {
+                    QString paramValue;
+                    if (QLineEdit *lineEdit = qobject_cast<QLineEdit*>(fieldWidget)) {
+                        paramValue = lineEdit->text();
+                    } else if (QSpinBox *spinBox = qobject_cast<QSpinBox*>(fieldWidget)) {
+                        paramValue = QString::number(spinBox->value());
+                    } else if (QWidget *container = qobject_cast<QWidget*>(fieldWidget)) {
+                        QLineEdit* lineEdit = container->findChild<QLineEdit*>();
+                        if(lineEdit) {
+                            paramValue = lineEdit->text();
+                        }
+                    }
+
+                    if (!flag.isEmpty()) {
+                        commandLine += " " + flag;
+                    }
+                    if (!paramValue.isEmpty()) {
+                        if (type == "raw_string") {
+                            commandLine += " " + paramValue;
+                        } else {
+                            if (paramValue.contains(' ')) {
+                                commandLine += " \"" + paramValue + "\"";
+                            } else {
+                                commandLine += " " + paramValue;
+                            }
+                        }
                     }
                 }
             }
@@ -521,6 +592,11 @@ void MainWindow::clearForm()
             delete item;
         }
     }
+    for (QButtonGroup* group : m_buttonGroups.values()) {
+        delete group;
+    }
+    m_buttonGroups.clear();
+    m_exclusiveGroupWidgets.clear();
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
