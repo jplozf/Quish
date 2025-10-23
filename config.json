@@ -1,0 +1,31 @@
+{
+  "commands": [
+    {
+      "name": "Echo Test",
+      "executable": "/bin/echo",
+      "arguments": [
+        {
+          "name": "Message",
+          "type": "string",
+          "flag": ""
+        }
+      ]
+    },
+    {
+      "name": "Ping",
+      "executable": "/bin/ping",
+      "arguments": [
+        {
+          "name": "Host",
+          "type": "raw_string",
+          "flag": ""
+        },
+        {
+          "name": "Count",
+          "type": "integer",
+          "flag": "-c"
+        }
+      ]
+    }
+  ]
+}
