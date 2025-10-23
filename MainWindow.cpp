@@ -87,6 +87,9 @@ MainWindow::MainWindow(QWidget *parent)
     , m_clearOutputCheckBox(nullptr)
 {
     ui->setupUi(this);
+    QFont monospaceFont("Monospace");
+    monospaceFont.setStyleHint(QFont::Monospace);
+    ui->txtOutput->setFont(monospaceFont);
     m_statusLabel = new QLabel(this);
     ui->statusbar->addWidget(m_statusLabel);
 
@@ -158,6 +161,45 @@ MainWindow::MainWindow(QWidget *parent)
 
     QString version = QString("0.%1-%2").arg(commitCount).arg(commitHash);
     ui->lblVersion->setText(version);
+
+    checkForNewVersion();
+}
+
+void MainWindow::checkForNewVersion()
+{
+    QProcess gitProcess;
+    QDir buildDir(QCoreApplication::applicationDirPath());
+    buildDir.cdUp();
+    buildDir.cdUp();
+    gitProcess.setWorkingDirectory(buildDir.absolutePath());
+
+    gitProcess.start("git", QStringList() << "rev-parse" << "--short" << "HEAD");
+    gitProcess.waitForFinished();
+    QString localCommitHash = gitProcess.readAllStandardOutput().trimmed();
+
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    connect(manager, &QNetworkAccessManager::finished, this, [=](QNetworkReply *reply) {
+        if (reply->error() == QNetworkReply::NoError) {
+            QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
+            if (!doc.isNull() && doc.isObject()) {
+                QJsonObject obj = doc.object();
+                QString remoteCommitHash = obj["sha"].toString().mid(0, 7); // Get short hash
+
+                if (remoteCommitHash != localCommitHash) {
+                    QMessageBox::information(this, tr("New Version Available"),
+                                             tr("A new version of Quish is available on GitHub!\nLocal: %1\nRemote: %2")
+                                                 .arg(localCommitHash).arg(remoteCommitHash));
+                }
+            }
+        } else {
+            qDebug() << "Network error:" << reply->errorString();
+        }
+        reply->deleteLater();
+        manager->deleteLater();
+    });
+
+    QNetworkRequest request(QUrl("https://api.github.com/repos/jplozf/Quish/commits/main"));
+    manager->get(request);
 }
 
 MainWindow::~MainWindow()
@@ -404,7 +446,8 @@ void MainWindow::on_btnRun_clicked()
         m_process = new QProcess(this);
         m_process->setProcessChannelMode(QProcess::MergedChannels);
         connect(m_process, &QProcess::readyReadStandardOutput, this, [this]() {
-            ui->txtOutput->append(m_process->readAllStandardOutput());
+            ui->txtOutput->insertPlainText(m_process->readAllStandardOutput());
+            ui->txtOutput->verticalScrollBar()->setValue(ui->txtOutput->verticalScrollBar()->maximum());
         });
         connect(m_process,
                 QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),

@@ -92,6 +92,11 @@
              <layout class="QGridLayout" name="gridLayout_2">
               <item row="1" column="0">
                <widget class="QTextEdit" name="txtOutput">
+                <property name="font">
+                 <font>
+                  <family>Consolas</family>
+                 </font>
+                </property>
                 <property name="readOnly">
                  <bool>true</bool>
                 </property>

@@ -1,6 +1,12 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <QScrollBar>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QMessageBox>
 #include <QCheckBox>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -48,6 +54,7 @@ private:
 
     void createTrayIcon();
     void destroyTrayIcon();
+    void checkForNewVersion();
 
     Ui::MainWindow *ui;
     QJsonObject m_currentConfig;
