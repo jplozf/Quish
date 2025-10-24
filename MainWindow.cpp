@@ -13,6 +13,7 @@
 #include <QProcess>
 #include <QFormLayout>
 #include <QHBoxLayout>
+#include <QFrame>
 #include <QCloseEvent>
 #include <QStandardPaths>
 #include <QDir>
@@ -85,6 +86,8 @@ MainWindow::MainWindow(QWidget *parent)
     , m_trayIcon(nullptr)
     , m_sudoCheckBox(nullptr)
     , m_clearOutputCheckBox(nullptr)
+    , m_workingDirectoryLabel(nullptr)
+    , m_workingDirectoryLineEdit(nullptr)
 {
     ui->setupUi(this);
     QFont monospaceFont("Monospace");
@@ -321,6 +324,30 @@ void MainWindow::buildUi(const QJsonObject &config)
     m_clearOutputCheckBox = new QCheckBox(tr("Clear Output Before Run"), ui->scrollAreaWidgetContents);
     layout->addRow(m_clearOutputCheckBox);
 
+    m_workingDirectoryLabel = new QLabel(tr("Folder"), ui->scrollAreaWidgetContents);
+    m_workingDirectoryLineEdit = new QLineEdit(QDir::homePath(), ui->scrollAreaWidgetContents);
+
+    QWidget *widget = new QWidget(this);
+    QHBoxLayout *hLayout = new QHBoxLayout(widget);
+    QPushButton *button = new QPushButton("...", this);
+    hLayout->addWidget(m_workingDirectoryLineEdit);
+    hLayout->addWidget(button);
+    hLayout->setContentsMargins(0, 0, 0, 0);
+    widget->setLayout(hLayout);
+    layout->addRow(m_workingDirectoryLabel, widget);
+
+    connect(button, &QPushButton::clicked, this, [this]() {
+        QString path = QFileDialog::getExistingDirectory(this, "Select Folder");
+        if (!path.isEmpty()) {
+            m_workingDirectoryLineEdit->setText(path);
+        }
+    });
+
+    QFrame *line = new QFrame();
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
+    layout->addRow(line);
+
     for (const QJsonValue &value : arguments) {
         QJsonObject arg = value.toObject();
         QString name = arg["name"].toString();
@@ -540,6 +567,7 @@ void MainWindow::on_btnRun_clicked()
     
         QStringList commandParts = commandLine.split(" ");
         QString program = commandParts.takeFirst();
+        m_process->setWorkingDirectory(m_workingDirectoryLineEdit->text());
         m_process->start(program, commandParts);
 
     if (lblCommand) {
@@ -586,6 +614,10 @@ void MainWindow::clearForm()
                     m_sudoCheckBox = nullptr; // Set to nullptr if it's the sudo checkbox
                 } else if (item->widget() == m_clearOutputCheckBox) {
                     m_clearOutputCheckBox = nullptr; // Set to nullptr if it's the clear output checkbox
+                } else if (item->widget() == m_workingDirectoryLabel) {
+                    m_workingDirectoryLabel = nullptr;
+                } else if (item->widget() == m_workingDirectoryLineEdit) {
+                    m_workingDirectoryLineEdit = nullptr;
                 }
                 delete item->widget();
             }

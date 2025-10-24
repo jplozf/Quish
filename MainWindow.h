@@ -78,6 +78,8 @@ private:
     bool m_isQuitting = false;
     QCheckBox *m_sudoCheckBox;
     QCheckBox *m_clearOutputCheckBox;
+    QLabel *m_workingDirectoryLabel;
+    QLineEdit *m_workingDirectoryLineEdit;
     QMap<QString, QList<QWidget*>> m_exclusiveGroupWidgets;
     QMap<QString, QButtonGroup*> m_buttonGroups;
 };
