@@ -45,6 +45,8 @@ private slots:
     void on_cmbCommands_currentIndexChanged(int index);
     void on_btnSaveFile_clicked();
     void on_btnBreak_clicked();
+    void on_btnClear_clicked();
+    void on_btnCopy_clicked();
     void trayIconActivated(QSystemTrayIcon::ActivationReason reason);
     void restoreActionTriggered();
     void onSettingChanged(const QString &param, const QVariant &value);
@@ -68,6 +70,7 @@ private:
     QString m_currentConfigFilePath;
     QLabel *lblEditFile;
     QAction *m_runAction;
+    QAction *m_breakAction;
     QProcess *m_process;
     QPushButton *m_btnBreak;
     QSystemTrayIcon *m_trayIcon;

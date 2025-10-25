@@ -1,5 +1,178 @@
 <RCC>
     <qresource prefix="/">
         <file>pix/Quish.png</file>
+        <file>icons/Action Redo.png</file>
+        <file>icons/Action Undo.png</file>
+        <file>icons/Arrow - Down.png</file>
+        <file>icons/Arrow - DownLeft.png</file>
+        <file>icons/Arrow - DownRight.png</file>
+        <file>icons/Arrow - Left.png</file>
+        <file>icons/Arrow - Right.png</file>
+        <file>icons/Arrow - Up.png</file>
+        <file>icons/Arrow - UpLeft.png</file>
+        <file>icons/Arrow - UpRight.png</file>
+        <file>icons/Arrow Next.png</file>
+        <file>icons/Arrow Previous.png</file>
+        <file>icons/Arrow2 - Down.png</file>
+        <file>icons/Arrow2 - Left.png</file>
+        <file>icons/Arrow2 - Right.png</file>
+        <file>icons/Arrow2 - Up.png</file>
+        <file>icons/Attach.png</file>
+        <file>icons/Back Top.png</file>
+        <file>icons/Back.png</file>
+        <file>icons/Bubble1.png</file>
+        <file>icons/Bubble2.png</file>
+        <file>icons/Bubble3.png</file>
+        <file>icons/Bubble4.png</file>
+        <file>icons/Bubble5.png</file>
+        <file>icons/Bubble6.png</file>
+        <file>icons/Bug.png</file>
+        <file>icons/Calc.png</file>
+        <file>icons/Cancel.png</file>
+        <file>icons/Cart.png</file>
+        <file>icons/Char - Amp.png</file>
+        <file>icons/Char - Bracket Left.png</file>
+        <file>icons/Char - Bracket Right.png</file>
+        <file>icons/Char - Colon.png</file>
+        <file>icons/Char - Comma.png</file>
+        <file>icons/Char - Dot.png</file>
+        <file>icons/Char - Equal.png</file>
+        <file>icons/Char - Less.png</file>
+        <file>icons/Char - Minus.png</file>
+        <file>icons/Char - More.png</file>
+        <file>icons/Char - Number.png</file>
+        <file>icons/Char - Parenthesis Left.png</file>
+        <file>icons/Char - Parenthesis Right.png</file>
+        <file>icons/Char - Percent.png</file>
+        <file>icons/Char - Quotation.png</file>
+        <file>icons/Char - Semicolon.png</file>
+        <file>icons/Char - Slash.png</file>
+        <file>icons/Char - Smiley 1.png</file>
+        <file>icons/Char - Smiley 2.png</file>
+        <file>icons/Char - Smiley 3.png</file>
+        <file>icons/Char - Smiley 4.png</file>
+        <file>icons/Char - Star.png</file>
+        <file>icons/Char - Tilde.png</file>
+        <file>icons/Chat.png</file>
+        <file>icons/Clipboard Copy.png</file>
+        <file>icons/Clipboard Cut.png</file>
+        <file>icons/Clipboard Paste.png</file>
+        <file>icons/Clock.png</file>
+        <file>icons/Close.png</file>
+        <file>icons/Computer.png</file>
+        <file>icons/Construction.png</file>
+        <file>icons/Copyright.png</file>
+        <file>icons/Document Graph.png</file>
+        <file>icons/Document Spreadsheet.png</file>
+        <file>icons/Document Text.png</file>
+        <file>icons/document.png</file>
+        <file>icons/Document.png</file>
+        <file>icons/Dollar.png</file>
+        <file>icons/Dollar2.png</file>
+        <file>icons/Download.png</file>
+        <file>icons/Email.png</file>
+        <file>icons/Euro.png</file>
+        <file>icons/Exclamation.png</file>
+        <file>icons/Face Happy.png</file>
+        <file>icons/Face Sad.png</file>
+        <file>icons/Face.png</file>
+        <file>icons/Flag.png</file>
+        <file>icons/Folder Open.png</file>
+        <file>icons/Folder Up.png</file>
+        <file>icons/Folder.png</file>
+        <file>icons/Forbidden.png</file>
+        <file>icons/Fullscreen.png</file>
+        <file>icons/Gear.png</file>
+        <file>icons/Gears.png</file>
+        <file>icons/Globe.png</file>
+        <file>icons/Hand.png</file>
+        <file>icons/Health.png</file>
+        <file>icons/Heart.png</file>
+        <file>icons/Home.png</file>
+        <file>icons/Info.png</file>
+        <file>icons/Info2.png</file>
+        <file>icons/Internet.png</file>
+        <file>icons/Key.png</file>
+        <file>icons/Light Off.png</file>
+        <file>icons/Light.png</file>
+        <file>icons/Link.png</file>
+        <file>icons/Lock Open.png</file>
+        <file>icons/Lock.png</file>
+        <file>icons/Loop.png</file>
+        <file>icons/Mail.png</file>
+        <file>icons/Man.png</file>
+        <file>icons/Media.png</file>
+        <file>icons/Minus.png</file>
+        <file>icons/Mouse.png</file>
+        <file>icons/Music.png</file>
+        <file>icons/Music2.png</file>
+        <file>icons/My Documents.png</file>
+        <file>icons/My Images.png</file>
+        <file>icons/My Music.png</file>
+        <file>icons/Network.png</file>
+        <file>icons/No.png</file>
+        <file>icons/Nuke.png</file>
+        <file>icons/Ok.png</file>
+        <file>icons/Ok2.png</file>
+        <file>icons/Pen.png</file>
+        <file>icons/Percent.png</file>
+        <file>icons/Phone.png</file>
+        <file>icons/Photo.png</file>
+        <file>icons/Plane.png</file>
+        <file>icons/Player Eject.png</file>
+        <file>icons/Player FastFwd.png</file>
+        <file>icons/Player FastRwd.png</file>
+        <file>icons/Player Next.png</file>
+        <file>icons/Player Pause.png</file>
+        <file>icons/Player Play.png</file>
+        <file>icons/Player Previous.png</file>
+        <file>icons/Player Record.png</file>
+        <file>icons/Player Slow.png</file>
+        <file>icons/Player Stop.png</file>
+        <file>icons/Plus.png</file>
+        <file>icons/Pointer.png</file>
+        <file>icons/Poll.png</file>
+        <file>icons/Pound.png</file>
+        <file>icons/Print Preview.png</file>
+        <file>icons/Printer.png</file>
+        <file>icons/Properties.png</file>
+        <file>icons/Question - Bold.png</file>
+        <file>icons/Question.png</file>
+        <file>icons/Question2.png</file>
+        <file>icons/Recycle.png</file>
+        <file>icons/Refresh.png</file>
+        <file>icons/Rotate.png</file>
+        <file>icons/Rss 1.png</file>
+        <file>icons/Rss 2.png</file>
+        <file>icons/Save.png</file>
+        <file>icons/Search.png</file>
+        <file>icons/Security.png</file>
+        <file>icons/Shutdown.png</file>
+        <file>icons/Sleep.png</file>
+        <file>icons/Sound Decrease.png</file>
+        <file>icons/Sound Increase.png</file>
+        <file>icons/Sound Mute.png</file>
+        <file>icons/Sound.png</file>
+        <file>icons/Standby.png</file>
+        <file>icons/Star Empty.png</file>
+        <file>icons/Star.png</file>
+        <file>icons/Star2.png</file>
+        <file>icons/Stats.png</file>
+        <file>icons/Target.png</file>
+        <file>icons/Text Decrease.png</file>
+        <file>icons/Text Increase.png</file>
+        <file>icons/Text2.png</file>
+        <file>icons/Time.png</file>
+        <file>icons/Trash.png</file>
+        <file>icons/Under Construction.png</file>
+        <file>icons/Upload.png</file>
+        <file>icons/User.png</file>
+        <file>icons/Users.png</file>
+        <file>icons/Video.png</file>
+        <file>icons/Wizard.png</file>
+        <file>icons/Woman.png</file>
+        <file>icons/Write.png</file>
+        <file>icons/Zoom In.png</file>
+        <file>icons/Zoom Out.png</file>
     </qresource>
 </RCC>

@@ -24,6 +24,8 @@
 #include <QAction>
 #include <QMessageBox>
 #include <QCoreApplication>
+#include <QApplication>
+#include <QClipboard>
 #include "settings.h"
 
 void MainWindow::createTrayIcon()
@@ -110,6 +112,11 @@ MainWindow::MainWindow(QWidget *parent)
     m_runAction->setShortcut(QKeySequence(Qt::Key_F3));
     connect(m_runAction, &QAction::triggered, this, &MainWindow::on_btnRun_clicked);
     this->addAction(m_runAction);
+
+    m_breakAction = new QAction(this);
+    m_breakAction->setShortcut(QKeySequence(Qt::Key_F4));
+    connect(m_breakAction, &QAction::triggered, this, &MainWindow::on_btnBreak_clicked);
+    this->addAction(m_breakAction);
 
     m_process = nullptr;
     m_btnBreak = findChild<QPushButton*>("btnBreak");
@@ -585,6 +592,18 @@ void MainWindow::on_btnBreak_clicked()
         m_process->terminate();
         m_statusLabel->setText(tr("Process terminated."));
     }
+}
+
+void MainWindow::on_btnClear_clicked()
+{
+    ui->txtOutput->clear();
+    ui->lblCommand->setText("Output");
+}
+
+void MainWindow::on_btnCopy_clicked()
+{
+    QClipboard *clipboard = QApplication::clipboard();
+    clipboard->setText(ui->txtOutput->toPlainText());
 }
 
 void MainWindow::restoreActionTriggered()

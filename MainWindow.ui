@@ -88,9 +88,9 @@
             <string>Output</string>
            </attribute>
            <layout class="QGridLayout" name="gridLayout_3">
-            <item row="0" column="0">
+            <item row="1" column="0">
              <layout class="QGridLayout" name="gridLayout_2">
-              <item row="1" column="0">
+              <item row="2" column="0">
                <widget class="QTextEdit" name="txtOutput">
                 <property name="font">
                  <font>
@@ -103,14 +103,53 @@
                </widget>
               </item>
               <item row="0" column="0">
-               <widget class="QLabel" name="lblCommand">
-                <property name="text">
-                 <string>Output</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
-               </widget>
+               <layout class="QHBoxLayout" name="horizontalLayout_3">
+                <item>
+                 <widget class="QLabel" name="lblCommand">
+                  <property name="text">
+                   <string>Output</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_3">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="btnClear">
+                  <property name="text">
+                   <string/>
+                  </property>
+                  <property name="icon">
+                   <iconset resource="Quish.qrc">
+                    <normaloff>:/icons/Trash.png</normaloff>:/icons/Trash.png</iconset>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="btnCopy">
+                  <property name="text">
+                   <string/>
+                  </property>
+                  <property name="icon">
+                   <iconset resource="Quish.qrc">
+                    <normaloff>:/icons/Clipboard Copy.png</normaloff>:/icons/Clipboard Copy.png</iconset>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
               </item>
              </layout>
             </item>
@@ -239,6 +278,8 @@
    </property>
   </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="Quish.qrc"/>
+ </resources>
  <connections/>
 </ui>
