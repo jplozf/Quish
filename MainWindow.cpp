@@ -118,6 +118,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_breakAction, &QAction::triggered, this, &MainWindow::on_btnBreak_clicked);
     this->addAction(m_breakAction);
 
+    connect(ui->cmbTopics, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::on_cmbTopics_currentIndexChanged);
+
     m_process = nullptr;
     m_btnBreak = findChild<QPushButton*>("btnBreak");
     if (m_btnBreak) {
@@ -238,21 +240,21 @@ bool MainWindow::loadConfigFile(const QString &filePath)
         return false;
     }
 
-    QJsonObject rootObj = doc.object();
-    if (!rootObj.contains("commands") || !rootObj["commands"].isArray()) {
-        QMessageBox::critical(this, tr("Error"), tr("Invalid configuration format: 'commands' array not found in %1.").arg(filePath));
+    m_rootConfig = doc.object();
+    if (!m_rootConfig.contains("topics") || !m_rootConfig["topics"].isObject()) {
+        QMessageBox::critical(this, tr("Error"), tr("Invalid configuration format: 'topics' object not found in %1.").arg(filePath));
         return false;
     }
 
-    m_allCommands = rootObj["commands"].toArray();
+    ui->cmbTopics->clear();
     ui->cmbCommands->clear();
-    for (const QJsonValue &value : m_allCommands) {
-        ui->cmbCommands->addItem(value.toObject()["name"].toString());
-    }
 
-    if (ui->cmbCommands->count() > 0) {
-        ui->cmbCommands->setCurrentIndex(0);
-        on_cmbCommands_currentIndexChanged(0);
+    QJsonObject topics = m_rootConfig["topics"].toObject();
+    ui->cmbTopics->addItems(topics.keys());
+
+    if (ui->cmbTopics->count() > 0) {
+        ui->cmbTopics->setCurrentIndex(0);
+        on_cmbTopics_currentIndexChanged(0);
     }
 
     ui->txtEditFile->setPlainText(QString(data));
@@ -298,11 +300,42 @@ void MainWindow::on_btnSaveFile_clicked()
 
 void MainWindow::on_cmbCommands_currentIndexChanged(int index)
 {
-    if (index < 0 || index >= m_allCommands.size()) {
+    if (index < 0) {
+        clearForm();
         return;
     }
-    m_currentConfig = m_allCommands[index].toObject();
+    QString selectedTopic = ui->cmbTopics->currentText();
+    QJsonArray commands = m_rootConfig["topics"].toObject()[selectedTopic].toArray();
+
+    if (index >= commands.size()) {
+        return;
+    }
+
+    m_currentConfig = commands[index].toObject();
     buildUi(m_currentConfig);
+}
+
+void MainWindow::on_cmbTopics_currentIndexChanged(int index)
+{
+    if (index < 0) {
+        return;
+    }
+    ui->cmbCommands->clear();
+
+    QString selectedTopic = ui->cmbTopics->currentText();
+    QJsonObject topics = m_rootConfig["topics"].toObject();
+    QJsonArray commands = topics[selectedTopic].toArray();
+
+    for (const QJsonValue &value : commands) {
+        ui->cmbCommands->addItem(value.toObject()["name"].toString());
+    }
+
+    if (ui->cmbCommands->count() > 0) {
+        ui->cmbCommands->setCurrentIndex(0);
+        on_cmbCommands_currentIndexChanged(0);
+    } else {
+        clearForm();
+    }
 }
 
 void MainWindow::buildUi(const QJsonObject &config)

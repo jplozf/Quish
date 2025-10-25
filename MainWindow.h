@@ -43,6 +43,7 @@ private slots:
     void on_actionOpen_triggered();
     void on_btnRun_clicked();
     void on_cmbCommands_currentIndexChanged(int index);
+    void on_cmbTopics_currentIndexChanged(int index);
     void on_btnSaveFile_clicked();
     void on_btnBreak_clicked();
     void on_btnClear_clicked();
@@ -62,7 +63,7 @@ private:
 
     Ui::MainWindow *ui;
     QJsonObject m_currentConfig;
-    QJsonArray m_allCommands;
+    QJsonObject m_rootConfig;
     QLabel *m_statusLabel;
     QElapsedTimer m_timer;
     QLabel *lblCommand;

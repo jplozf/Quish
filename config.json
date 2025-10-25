@@ -1,75 +1,108 @@
 {
-  "commands": [
-    {
-      "name": "Echo Test",
-      "executable": "/bin/echo",
-      "arguments": [
-        {
-          "name": "Message",
-          "type": "string",
-          "flag": ""
-        }
-      ]
-    },
-    {
-      "name": "Ping",
-      "executable": "/bin/ping",
-      "arguments": [
-        {
-          "name": "Host",
-          "type": "raw_string",
-          "flag": ""
-        },
-        {
-          "name": "Count",
-          "type": "integer",
-          "flag": "-c"
-        }
-      ]
-    },
-    {
-      "name": "List Root",
-      "executable": "/bin/ls",
-      "arguments": [
-        {
-          "name": "Options",
-          "type": "raw_string",
-          "flag": "-l /root"
-        }
-      ]
-    },
-    {
-      "name": "upx_test",
-      "executable": "upx",
-      "arguments": [
-        {
-          "name": "Compress faster",
-          "flag": "-1",
-          "type": "boolean",
-          "exclusive_group": "compression_level"
-        },
-        {
-          "name": "Compress better",
-          "flag": "-9",
-          "type": "boolean",
-          "exclusive_group": "compression_level"
-        },
-        {
-          "name": "Input file",
-          "flag": "",
-          "type": "string"
-        },
-        {
-          "name": "Output file",
-          "flag": "-o",
-          "type": "string"
-        },
-        {
-          "name": "Force compression",
-          "flag": "--force",
-          "type": "boolean"
-        }
-      ]
-    }
-  ]
+  "topics": {
+    "Network": [
+      {
+        "name": "Ping",
+        "executable": "/bin/ping",
+        "arguments": [
+          {
+            "name": "Host",
+            "type": "raw_string",
+            "flag": ""
+          },
+          {
+            "name": "Count",
+            "type": "integer",
+            "flag": "-c"
+          }
+        ]
+      }
+    ],
+    "Disk Management": [
+      {
+        "name": "Ping",
+        "executable": "/bin/ping",
+        "arguments": [
+          {
+            "name": "Host",
+            "type": "raw_string",
+            "flag": ""
+          },
+          {
+            "name": "Count",
+            "type": "integer",
+            "flag": "-c"
+          }
+        ]
+      }
+    ],
+    "Misc": [
+      {
+        "name": "Echo Test",
+        "executable": "/bin/echo",
+        "arguments": [
+          {
+            "name": "Message",
+            "type": "string",
+            "flag": ""
+          }
+        ]
+      },
+      {
+        "name": "List Root",
+        "executable": "/bin/ls",
+        "arguments": [
+          {
+            "name": "Options",
+            "type": "raw_string",
+            "flag": "-l /root"
+          }
+        ]
+      },
+      {
+        "name": "List",
+        "executable": "/bin/ls",
+        "arguments": [
+          {
+            "name": "Options",
+            "type": "raw_string",
+            "flag": "-al"
+          }
+        ]
+      },
+      {
+        "name": "upx_test",
+        "executable": "upx",
+        "arguments": [
+          {
+            "name": "Compress faster",
+            "flag": "-1",
+            "type": "boolean",
+            "exclusive_group": "compression_level"
+          },
+          {
+            "name": "Compress better",
+            "flag": "-9",
+            "type": "boolean",
+            "exclusive_group": "compression_level"
+          },
+          {
+            "name": "Input file",
+            "flag": "",
+            "type": "string"
+          },
+          {
+            "name": "Output file",
+            "flag": "-o",
+            "type": "string"
+          },
+          {
+            "name": "Force compression",
+            "flag": "--force",
+            "type": "boolean"
+          }
+        ]
+      }
+    ]
+  }
 }

@@ -23,6 +23,9 @@
       <widget class="QWidget" name="verticalLayoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
+         <widget class="QComboBox" name="cmbTopics"/>
+        </item>
+        <item>
          <widget class="QComboBox" name="cmbCommands"/>
         </item>
         <item>
@@ -36,7 +39,7 @@
              <x>0</x>
              <y>0</y>
              <width>284</width>
-             <height>322</height>
+             <height>292</height>
             </rect>
            </property>
            <layout class="QFormLayout" name="formLayout"/>
@@ -48,14 +51,22 @@
           <item>
            <widget class="QPushButton" name="btnRun">
             <property name="text">
-             <string>Run</string>
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="Quish.qrc">
+              <normaloff>:/icons/Player Play.png</normaloff>:/icons/Player Play.png</iconset>
             </property>
            </widget>
           </item>
           <item>
            <widget class="QPushButton" name="btnBreak">
             <property name="text">
-             <string>Break</string>
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="Quish.qrc">
+              <normaloff>:/icons/Player Stop.png</normaloff>:/icons/Player Stop.png</iconset>
             </property>
            </widget>
           </item>
@@ -81,7 +92,7 @@
         <item>
          <widget class="QTabWidget" name="tabWidget">
           <property name="currentIndex">
-           <number>0</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="tabOutput">
            <attribute name="title">
@@ -106,6 +117,11 @@
                <layout class="QHBoxLayout" name="horizontalLayout_3">
                 <item>
                  <widget class="QLabel" name="lblCommand">
+                  <property name="font">
+                   <font>
+                    <family>Consolas</family>
+                   </font>
+                  </property>
                   <property name="text">
                    <string>Output</string>
                   </property>
@@ -183,7 +199,11 @@
                 <item>
                  <widget class="QPushButton" name="btnSaveFile">
                   <property name="text">
-                   <string>Save</string>
+                   <string/>
+                  </property>
+                  <property name="icon">
+                   <iconset resource="Quish.qrc">
+                    <normaloff>:/icons/Save.png</normaloff>:/icons/Save.png</iconset>
                   </property>
                  </widget>
                 </item>
