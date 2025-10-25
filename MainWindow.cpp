@@ -92,6 +92,7 @@ MainWindow::MainWindow(QWidget *parent)
     , m_clearOutputCheckBox(nullptr)
     , m_workingDirectoryLabel(nullptr)
     , m_workingDirectoryLineEdit(nullptr)
+    , m_themeComboBox(nullptr)
 {
     ui->setupUi(this);
     QFont monospaceFont("Monospace");
@@ -100,7 +101,7 @@ MainWindow::MainWindow(QWidget *parent)
     m_statusLabel = new QLabel(this);
     ui->statusbar->addWidget(m_statusLabel);
 
-    lblCommand = findChild<QLabel*>("lblCommand");
+    lblCommand = findChild<QLabel*>(tr("lblCommand"));
 
     QSettings settings("MyCompany", "Quish");
     restoreGeometry(settings.value("geometry").toByteArray());
@@ -121,7 +122,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->cmbTopics, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::on_cmbTopics_currentIndexChanged);
 
     m_process = nullptr;
-    m_btnBreak = findChild<QPushButton*>("btnBreak");
+    m_btnBreak = findChild<QPushButton*>(tr("btnBreak"));
     if (m_btnBreak) {
         m_btnBreak->setEnabled(false);
     }
@@ -141,9 +142,29 @@ MainWindow::MainWindow(QWidget *parent)
     m_appSettings.form(settingsContainerWidget);
     connect(&m_appSettings, &Settings::settingChanged, this, &MainWindow::onSettingChanged);
 
+    // Theme selection
+    m_themeComboBox = new QComboBox(settingsContainerWidget);
+    settingsFormLayout->addRow(tr("Theme"), m_themeComboBox);
+    QStringList themeFiles;
+    themeFiles << "dark" << "light" << "AMOLED" << "Aqua" << "ConsoleStyle" << "ElegantDark" << "MacOS" << "ManjaroMix" << "MaterialDark" << "NeonButtons" << "Ubuntu";
+    for (const QString &theme : themeFiles) {
+        m_themeComboBox->addItem(theme);
+    }
+    connect(m_themeComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::on_themeComboBox_currentIndexChanged);
+
     // System Tray Icon setup
     if (m_appSettings.get("minimizeToTray").toBool()) {
         createTrayIcon();
+    }
+
+    // Load saved theme
+    QString savedTheme = settings.value("theme", "light").toString();
+    int index = m_themeComboBox->findText(savedTheme);
+    if (index != -1) {
+        m_themeComboBox->setCurrentIndex(index);
+        applyTheme(savedTheme);
+    } else {
+        applyTheme("light"); // Fallback to light theme if saved theme is not found
     }
 
     // Create .Quish folder in home directory if it doesn't exist
@@ -214,6 +235,18 @@ void MainWindow::checkForNewVersion()
 
     QNetworkRequest request(QUrl("https://api.github.com/repos/jplozf/Quish/commits/main"));
     manager->get(request);
+}
+
+void MainWindow::on_themeComboBox_currentIndexChanged(int index)
+{
+    QString selectedTheme = m_themeComboBox->itemText(index);
+    if (selectedTheme == "Default") {
+        qApp->setStyleSheet("");
+    } else {
+        applyTheme(selectedTheme);
+    }
+    QSettings settings("MyCompany", "Quish");
+    settings.setValue("theme", selectedTheme);
 }
 
 MainWindow::~MainWindow()
@@ -289,7 +322,7 @@ void MainWindow::on_btnSaveFile_clicked()
 
     qDebug() << "Saving to file:" << m_currentConfigFilePath;
     QString contentToSave = ui->txtEditFile->toPlainText();
-    qDebug() << "Content to save:\n" << contentToSave;
+    qDebug() << "Content to save:" << contentToSave;
     QTextStream out(&file);
     out << contentToSave;
     file.close();
@@ -462,6 +495,18 @@ void MainWindow::buildUi(const QJsonObject &config)
             checkBox->setProperty("argFlag", arg["flag"].toString());
             checkBox->setProperty("argName", name);
         }
+    }
+}
+
+void MainWindow::applyTheme(const QString &themeName)
+{
+    QFile file(QString(":/themes/%1.qss").arg(themeName));
+    if (file.open(QFile::ReadOnly)) {
+        QString styleSheet = QLatin1String(file.readAll());
+        qApp->setStyleSheet(styleSheet);
+        file.close();
+    } else {
+        qWarning() << "Could not open theme file:" << themeName;
     }
 }
 
@@ -675,6 +720,8 @@ void MainWindow::clearForm()
                     m_workingDirectoryLabel = nullptr;
                 } else if (item->widget() == m_workingDirectoryLineEdit) {
                     m_workingDirectoryLineEdit = nullptr;
+                } else if (item->widget() == m_themeComboBox) {
+                    m_themeComboBox = nullptr;
                 }
                 delete item->widget();
             }
@@ -695,6 +742,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     settings.setValue("windowState", saveState());
     settings.setValue("currentTab", ui->tabWidget->currentIndex());
     settings.setValue("splitterSizes", ui->splitter->saveState());
+    settings.setValue("theme", m_themeComboBox->currentText());
 
     if (m_trayIcon && m_appSettings.get("minimizeToTray").toBool() && !m_isQuitting) {
         hide();

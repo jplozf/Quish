@@ -20,6 +20,7 @@
 #include <QTime>
 #include <QRadioButton>
 #include <QButtonGroup>
+#include <QComboBox>
 #include "settings.h"
 
 QT_BEGIN_NAMESPACE
@@ -51,11 +52,13 @@ private slots:
     void trayIconActivated(QSystemTrayIcon::ActivationReason reason);
     void restoreActionTriggered();
     void onSettingChanged(const QString &param, const QVariant &value);
+    void on_themeComboBox_currentIndexChanged(int index);
 
 private:
     void buildUi(const QJsonObject &config);
     void clearForm();
     bool loadConfigFile(const QString &filePath);
+    void applyTheme(const QString &themeName);
 
     void createTrayIcon();
     void destroyTrayIcon();
@@ -84,6 +87,7 @@ private:
     QCheckBox *m_clearOutputCheckBox;
     QLabel *m_workingDirectoryLabel;
     QLineEdit *m_workingDirectoryLineEdit;
+    QComboBox *m_themeComboBox;
     QMap<QString, QList<QWidget*>> m_exclusiveGroupWidgets;
     QMap<QString, QButtonGroup*> m_buttonGroups;
 };

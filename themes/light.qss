@@ -1,0 +1,99 @@
+
+/* Light Theme */
+QWidget {
+    background-color: #F0F0F0;
+    color: #333333;
+}
+
+QMainWindow {
+    background-color: #F0F0F0;
+}
+
+QMenuBar {
+    background-color: #E0E0E0;
+    color: #333333;
+}
+
+QMenuBar::item {
+    background-color: #E0E0E0;
+    color: #333333;
+}
+
+QMenuBar::item:selected {
+    background-color: #CCCCCC;
+}
+
+QMenu {
+    background-color: #E0E0E0;
+    color: #333333;
+    border: 1px solid #BBBBBB;
+}
+
+QMenu::item:selected {
+    background-color: #CCCCCC;
+}
+
+QPushButton {
+    background-color: #E0E0E0;
+    color: #333333;
+    border: 1px solid #BBBBBB;
+    padding: 5px;
+}
+
+QPushButton:hover {
+    background-color: #D0D0D0;
+}
+
+QLineEdit, QTextEdit, QComboBox, QSpinBox {
+    background-color: #FFFFFF;
+    color: #333333;
+    border: 1px solid #BBBBBB;
+    padding: 2px;
+}
+
+QTabWidget::pane {
+    border: 1px solid #BBBBBB;
+    background-color: #F0F0F0;
+}
+
+QTabBar::tab {
+    background-color: #E0E0E0;
+    color: #333333;
+    border: 1px solid #BBBBBB;
+    padding: 5px;
+}
+
+QTabBar::tab:selected {
+    background-color: #F0F0F0;
+    border-bottom-color: #F0F0F0;
+}
+
+QStatusBar {
+    background-color: #E0E0E0;
+    color: #333333;
+}
+
+QCheckBox {
+    color: #333333;
+}
+
+QRadioButton {
+    color: #333333;
+}
+
+QGroupBox {
+    color: #333333;
+    border: 1px solid #BBBBBB;
+    margin-top: 1ex; /* leave space at the top for the title */
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top center; /* position at the top center */
+    padding: 0 3px;
+    background-color: #F0F0F0;
+}
+
+QScrollArea QWidget {
+    background-color: #F0F0F0;
+}

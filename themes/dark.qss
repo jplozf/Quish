@@ -1,0 +1,99 @@
+
+/* Dark Theme */
+QWidget {
+    background-color: #333333;
+    color: #CCCCCC;
+}
+
+QMainWindow {
+    background-color: #333333;
+}
+
+QMenuBar {
+    background-color: #333333;
+    color: #CCCCCC;
+}
+
+QMenuBar::item {
+    background-color: #333333;
+    color: #CCCCCC;
+}
+
+QMenuBar::item:selected {
+    background-color: #555555;
+}
+
+QMenu {
+    background-color: #333333;
+    color: #CCCCCC;
+    border: 1px solid #555555;
+}
+
+QMenu::item:selected {
+    background-color: #555555;
+}
+
+QPushButton {
+    background-color: #555555;
+    color: #CCCCCC;
+    border: 1px solid #777777;
+    padding: 5px;
+}
+
+QPushButton:hover {
+    background-color: #666666;
+}
+
+QLineEdit, QTextEdit, QComboBox, QSpinBox {
+    background-color: #444444;
+    color: #CCCCCC;
+    border: 1px solid #777777;
+    padding: 2px;
+}
+
+QTabWidget::pane {
+    border: 1px solid #555555;
+    background-color: #333333;
+}
+
+QTabBar::tab {
+    background-color: #444444;
+    color: #CCCCCC;
+    border: 1px solid #555555;
+    padding: 5px;
+}
+
+QTabBar::tab:selected {
+    background-color: #333333;
+    border-bottom-color: #333333;
+}
+
+QStatusBar {
+    background-color: #333333;
+    color: #CCCCCC;
+}
+
+QCheckBox {
+    color: #CCCCCC;
+}
+
+QRadioButton {
+    color: #CCCCCC;
+}
+
+QGroupBox {
+    color: #CCCCCC;
+    border: 1px solid #555555;
+    margin-top: 1ex; /* leave space at the top for the title */
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top center; /* position at the top center */
+    padding: 0 3px;
+    background-color: #333333;
+}
+
+QScrollArea QWidget {
+    background-color: #333333;
+}

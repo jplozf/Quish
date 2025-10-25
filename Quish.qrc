@@ -173,5 +173,16 @@
         <file>icons/Write.png</file>
         <file>icons/Zoom In.png</file>
         <file>icons/Zoom Out.png</file>
+        <file>themes/dark.qss</file>
+        <file>themes/light.qss</file>
+        <file>themes/Ubuntu.qss</file>
+        <file>themes/NeonButtons.qss</file>
+        <file>themes/MaterialDark.qss</file>
+        <file>themes/ManjaroMix.qss</file>
+        <file>themes/MacOS.qss</file>
+        <file>themes/ElegantDark.qss</file>
+        <file>themes/ConsoleStyle.qss</file>
+        <file>themes/Aqua.qss</file>
+        <file>themes/AMOLED.qss</file>
     </qresource>
 </RCC>
