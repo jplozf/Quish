@@ -14,6 +14,8 @@
 #include <QFormLayout>
 #include <QHBoxLayout>
 #include <QFrame>
+#include <QSizePolicy>
+#include <QFontMetrics>
 #include <QCloseEvent>
 #include <QStandardPaths>
 #include <QDir>
@@ -330,7 +332,10 @@ void MainWindow::buildUi(const QJsonObject &config)
     QWidget *widget = new QWidget(this);
     QHBoxLayout *hLayout = new QHBoxLayout(widget);
     QPushButton *button = new QPushButton("...", this);
-    hLayout->addWidget(m_workingDirectoryLineEdit);
+    QFontMetrics fm(button->font());
+    int width = fm.horizontalAdvance("...") + 20;
+    button->setFixedWidth(width);
+    hLayout->addWidget(m_workingDirectoryLineEdit, 1);
     hLayout->addWidget(button);
     hLayout->setContentsMargins(0, 0, 0, 0);
     widget->setLayout(hLayout);
