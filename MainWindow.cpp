@@ -27,7 +27,6 @@
 #include <QApplication>
 #include <QClipboard>
 #include "settings.h"
-#include "version.h"
 
 void MainWindow::createTrayIcon()
 {
@@ -182,7 +181,8 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     // Set version label
-    ui->lblVersion->setText(APP_VERSION_STRING);
+    QString version = QString(APP_VERSION_STRING);
+    ui->lblVersion->setText(version);
 
     checkForNewVersion();
 }

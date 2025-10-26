@@ -8,6 +8,7 @@ CONFIG += c++17
 GIT_COMMIT_COUNT = $$system(git rev-list --count HEAD)
 GIT_COMMIT_HASH = $$system(git rev-parse --short HEAD)
 VERSION = 0.$${GIT_COMMIT_COUNT}-$${GIT_COMMIT_HASH}
+DEFINES += APP_VERSION_STRING=\\\"$$VERSION\\\"
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -20,8 +21,7 @@ SOURCES += \
 
 HEADERS += \
     MainWindow.h \
-    settings.h \
-    version.h
+    settings.h
 
 FORMS += \
     MainWindow.ui
