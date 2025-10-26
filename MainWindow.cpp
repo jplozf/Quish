@@ -28,62 +28,6 @@
 #include <QClipboard>
 #include "settings.h"
 
-void MainWindow::createTrayIcon()
-{
-    if (m_trayIcon) return;
-
-    m_trayIcon = new QSystemTrayIcon(this);
-    m_trayIcon->setIcon(QApplication::windowIcon());
-    m_trayIcon->setToolTip(tr("Quish Application"));
-
-    m_restoreAction = new QAction(tr("Restore"), this);
-    connect(m_restoreAction, &QAction::triggered, this, &MainWindow::restoreActionTriggered);
-
-    m_quitAction = new QAction(tr("Quit"), this);
-    connect(m_quitAction, &QAction::triggered, this, [this]() {
-        m_isQuitting = true;
-        close();
-    });
-
-    m_trayMenu = new QMenu(this);
-    m_trayMenu->addAction(m_restoreAction);
-    m_trayMenu->addSeparator();
-    m_trayMenu->addAction(m_quitAction);
-    m_trayIcon->setContextMenu(m_trayMenu);
-
-    connect(m_trayIcon, &QSystemTrayIcon::activated, this, &MainWindow::trayIconActivated);
-    m_trayIcon->show();
-}
-
-void MainWindow::destroyTrayIcon()
-{
-    if (!m_trayIcon) return;
-
-    m_trayIcon->hide();
-    delete m_trayIcon;
-    m_trayIcon = nullptr;
-
-    delete m_trayMenu;
-    m_trayMenu = nullptr;
-
-    delete m_restoreAction;
-    m_restoreAction = nullptr;
-
-    delete m_quitAction;
-    m_quitAction = nullptr;
-}
-
-void MainWindow::onSettingChanged(const QString &param, const QVariant &value)
-{
-    if (param == "minimizeToTray") {
-        if (value.toBool()) {
-            createTrayIcon();
-        } else {
-            destroyTrayIcon();
-        }
-    }
-}
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -95,9 +39,19 @@ MainWindow::MainWindow(QWidget *parent)
     , m_themeComboBox(nullptr)
 {
     ui->setupUi(this);
+
+    // Programmatically add Help tab
+    QWidget *helpTab = new QWidget();
+    ui->tabWidget->insertTab(1, helpTab, "Help");
+    QGridLayout *helpLayout = new QGridLayout(helpTab);
+    m_txtHelp = new QTextEdit(helpTab);
+    m_txtHelp->setReadOnly(true);
+    helpLayout->addWidget(m_txtHelp);
+
     QFont monospaceFont("Monospace");
     monospaceFont.setStyleHint(QFont::Monospace);
     ui->txtOutput->setFont(monospaceFont);
+    m_txtHelp->setFont(monospaceFont);
     m_statusLabel = new QLabel(this);
     ui->statusbar->addWidget(m_statusLabel);
 
@@ -119,7 +73,15 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_breakAction, &QAction::triggered, this, &MainWindow::on_btnBreak_clicked);
     this->addAction(m_breakAction);
 
-    connect(ui->cmbTopics, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::on_cmbTopics_currentIndexChanged);
+    m_saveAction = new QAction(this);
+    m_saveAction->setShortcut(QKeySequence("Ctrl+S"));
+    connect(m_saveAction, &QAction::triggered, this, &MainWindow::on_btnSaveFile_clicked);
+    this->addAction(m_saveAction);
+
+    connect(ui->cmbTopics,
+            QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this,
+            &MainWindow::on_cmbTopics_currentIndexChanged);
 
     m_process = nullptr;
     m_btnBreak = findChild<QPushButton*>(tr("btnBreak"));
@@ -185,6 +147,62 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lblVersion->setText(version);
 
     checkForNewVersion();
+}
+
+void MainWindow::createTrayIcon()
+{
+    if (m_trayIcon) return;
+
+    m_trayIcon = new QSystemTrayIcon(this);
+    m_trayIcon->setIcon(QApplication::windowIcon());
+    m_trayIcon->setToolTip(tr("Quish Application"));
+
+    m_restoreAction = new QAction(tr("Restore"), this);
+    connect(m_restoreAction, &QAction::triggered, this, &MainWindow::restoreActionTriggered);
+
+    m_quitAction = new QAction(tr("Quit"), this);
+    connect(m_quitAction, &QAction::triggered, this, [this]() {
+        m_isQuitting = true;
+        close();
+    });
+
+    m_trayMenu = new QMenu(this);
+    m_trayMenu->addAction(m_restoreAction);
+    m_trayMenu->addSeparator();
+    m_trayMenu->addAction(m_quitAction);
+    m_trayIcon->setContextMenu(m_trayMenu);
+
+    connect(m_trayIcon, &QSystemTrayIcon::activated, this, &MainWindow::trayIconActivated);
+    m_trayIcon->show();
+}
+
+void MainWindow::destroyTrayIcon()
+{
+    if (!m_trayIcon) return;
+
+    m_trayIcon->hide();
+    delete m_trayIcon;
+    m_trayIcon = nullptr;
+
+    delete m_trayMenu;
+    m_trayMenu = nullptr;
+
+    delete m_restoreAction;
+    m_restoreAction = nullptr;
+
+    delete m_quitAction;
+    m_quitAction = nullptr;
+}
+
+void MainWindow::onSettingChanged(const QString &param, const QVariant &value)
+{
+    if (param == "minimizeToTray") {
+        if (value.toBool()) {
+            createTrayIcon();
+        } else {
+            destroyTrayIcon();
+        }
+    }
 }
 
 void MainWindow::checkForNewVersion()
@@ -299,9 +317,7 @@ void MainWindow::on_btnSaveFile_clicked()
         return;
     }
 
-    qDebug() << "Saving to file:" << m_currentConfigFilePath;
     QString contentToSave = ui->txtEditFile->toPlainText();
-    qDebug() << "Content to save:" << contentToSave;
     QTextStream out(&file);
     out << contentToSave;
     file.close();
@@ -325,6 +341,27 @@ void MainWindow::on_cmbCommands_currentIndexChanged(int index)
 
     m_currentConfig = commands[index].toObject();
     buildUi(m_currentConfig);
+
+    m_txtHelp->clear();
+    if (m_currentConfig.contains("man")) {
+        QString manCommand = "man " + m_currentConfig["man"].toString();
+        QProcess *process = new QProcess(this);
+        process->setProcessChannelMode(QProcess::MergedChannels);
+        connect(process, &QProcess::readyReadStandardOutput, this, [this, process]() {
+            m_txtHelp->insertPlainText(process->readAllStandardOutput());
+        });
+        connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, [this, process](int exitCode, QProcess::ExitStatus exitStatus) {
+            Q_UNUSED(exitStatus);
+            if (exitCode != 0) {
+                m_txtHelp->setPlainText(QString("Error executing man command. Exit code: %1").arg(exitCode));
+            }
+            m_txtHelp->moveCursor(QTextCursor::Start);
+            process->deleteLater();
+        });
+        process->start(manCommand);
+    } else {
+        m_txtHelp->clear();
+    }
 }
 
 void MainWindow::on_cmbTopics_currentIndexChanged(int index)

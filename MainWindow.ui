@@ -38,7 +38,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>284</width>
+             <width>218</width>
              <height>292</height>
             </rect>
            </property>
@@ -92,7 +92,7 @@
         <item>
          <widget class="QTabWidget" name="tabWidget">
           <property name="currentIndex">
-           <number>1</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="tabOutput">
            <attribute name="title">
@@ -166,6 +166,20 @@
                  </widget>
                 </item>
                </layout>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="tabHelp">
+           <attribute name="title">
+            <string>Help</string>
+           </attribute>
+           <layout class="QGridLayout" name="gridLayout_6">
+            <item row="0" column="0">
+             <layout class="QVBoxLayout" name="verticalLayout_4">
+              <item>
+               <widget class="QTextEdit" name="txtHelp"/>
               </item>
              </layout>
             </item>

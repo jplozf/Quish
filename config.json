@@ -4,6 +4,7 @@
       {
         "name": "Ping",
         "executable": "/bin/ping",
+        "man":"ping",
         "arguments": [
           {
             "name": "Host",
@@ -16,12 +17,90 @@
             "flag": "-c"
           }
         ]
+      },
+      {
+        "name": "Traceroute",
+        "executable": "traceroute",
+        "man":"traceroute",
+        "arguments": [
+          {
+            "name": "IPV4",
+            "type": "boolean",
+            "flag": "-4"
+          },
+          {
+            "name": "IPV6",
+            "type": "boolean",
+            "flag": "-6"
+          },
+          {
+            "name": "Debug",
+            "type": "boolean",
+            "flag": "-d"
+          },
+          {
+            "name": "Don't Fragment",
+            "type": "boolean",
+            "flag": "-F"
+          },
+          {
+            "name": "ICMP ECHO probes",
+            "type": "boolean",
+            "flag": "-I"
+          },
+          {
+            "name": "TCP SYN probes",
+            "type": "boolean",
+            "flag": "-T"
+          },
+          {
+            "name": "Use UDP",
+            "type": "boolean",
+            "flag": "-U"
+          },
+          {
+            "name": "Don't map IP addresses to host names",
+            "type": "boolean",
+            "flag": "-n"
+          },
+          {
+            "name": "Bypass routing tables",
+            "type": "boolean",
+            "flag": "-r"
+          },
+          {
+            "name": "Show ICMP extensions",
+            "type": "boolean",
+            "flag": "-e"
+          },
+          {
+            "name": "Perform AS path lookups",
+            "type": "boolean",
+            "flag": "-A"
+          },
+          {
+            "name": "Version",
+            "type": "boolean",
+            "flag": "-V"
+          },
+          {
+            "name": "Host",
+            "type": "raw_string",
+            "flag": ""
+          },
+          {
+            "name": "Packet Length",
+            "type": "integer",
+            "flag": ""
+          }
+        ]
       }
     ],
     "Disk Management": [
       {
         "name": "Ping",
         "executable": "/bin/ping",
+        "man":"ping",
         "arguments": [
           {
             "name": "Host",
@@ -40,6 +119,7 @@
       {
         "name": "Echo Test",
         "executable": "/bin/echo",
+        "man":"echo",
         "arguments": [
           {
             "name": "Message",
@@ -51,6 +131,7 @@
       {
         "name": "List Root",
         "executable": "/bin/ls",
+        "man":"ls",
         "arguments": [
           {
             "name": "Options",
@@ -62,6 +143,7 @@
       {
         "name": "List",
         "executable": "/bin/ls",
+        "man":"ls",
         "arguments": [
           {
             "name": "Options",
@@ -71,18 +153,67 @@
         ]
       },
       {
-        "name": "upx_test",
+        "name": "Ultimate Packer for eXecutables",
         "executable": "upx",
+        "man":"upx",
         "arguments": [
           {
-            "name": "Compress faster",
+            "name": "Compress Level 1 (Faster)",
             "flag": "-1",
             "type": "boolean",
             "exclusive_group": "compression_level"
           },
           {
-            "name": "Compress better",
+            "name": "Compress Level 2",
+            "flag": "-2",
+            "type": "boolean",
+            "exclusive_group": "compression_level"
+          },
+          {
+            "name": "Compress Level 3",
+            "flag": "-3",
+            "type": "boolean",
+            "exclusive_group": "compression_level"
+          },
+          {
+            "name": "Compress Level 4",
+            "flag": "-4",
+            "type": "boolean",
+            "exclusive_group": "compression_level"
+          },
+          {
+            "name": "Compress Level 5",
+            "flag": "-5",
+            "type": "boolean",
+            "exclusive_group": "compression_level"
+          },
+          {
+            "name": "Compress Level 6",
+            "flag": "-6",
+            "type": "boolean",
+            "exclusive_group": "compression_level"
+          },
+          {
+            "name": "Compress Level 7",
+            "flag": "-7",
+            "type": "boolean",
+            "exclusive_group": "compression_level"
+          },
+          {
+            "name": "Compress Level 8",
+            "flag": "-8",
+            "type": "boolean",
+            "exclusive_group": "compression_level"
+          },
+          {
+            "name": "Compress Level 9 (Better)",
             "flag": "-9",
+            "type": "boolean",
+            "exclusive_group": "compression_level"
+          },
+          {
+            "name": "Compress Level Best",
+            "flag": "--best",
             "type": "boolean",
             "exclusive_group": "compression_level"
           },
