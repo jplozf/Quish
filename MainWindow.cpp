@@ -27,6 +27,7 @@
 #include <QApplication>
 #include <QClipboard>
 #include "settings.h"
+#include "version.h"
 
 void MainWindow::createTrayIcon()
 {
@@ -181,36 +182,14 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     // Set version label
-    QProcess gitProcess;
-    QDir buildDir(QCoreApplication::applicationDirPath());
-    buildDir.cdUp();
-    buildDir.cdUp(); // Navigate up one more level to reach the project root
-    gitProcess.setWorkingDirectory(buildDir.absolutePath());
-    gitProcess.start("git", QStringList() << "rev-list" << "--count" << "HEAD");
-    gitProcess.waitForFinished();
-    QString commitCount = gitProcess.readAllStandardOutput().trimmed();
-
-    gitProcess.start("git", QStringList() << "rev-parse" << "--short" << "HEAD");
-    gitProcess.waitForFinished();
-    QString commitHash = gitProcess.readAllStandardOutput().trimmed();
-
-    QString version = QString("0.%1-%2").arg(commitCount).arg(commitHash);
-    ui->lblVersion->setText(version);
+    ui->lblVersion->setText(APP_VERSION_STRING);
 
     checkForNewVersion();
 }
 
 void MainWindow::checkForNewVersion()
 {
-    QProcess gitProcess;
-    QDir buildDir(QCoreApplication::applicationDirPath());
-    buildDir.cdUp();
-    buildDir.cdUp();
-    gitProcess.setWorkingDirectory(buildDir.absolutePath());
-
-    gitProcess.start("git", QStringList() << "rev-parse" << "--short" << "HEAD");
-    gitProcess.waitForFinished();
-    QString localCommitHash = gitProcess.readAllStandardOutput().trimmed();
+    QString localCommitHash = QString(APP_VERSION_STRING).section('-', 1, 1); // Extract hash from "0.X-hash"
 
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
     connect(manager, &QNetworkAccessManager::finished, this, [=](QNetworkReply *reply) {
