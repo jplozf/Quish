@@ -26,6 +26,7 @@
 #include <QCoreApplication>
 #include <QApplication>
 #include <QClipboard>
+#include <QIntValidator>
 #include "settings.h"
 
 MainWindow::MainWindow(QWidget *parent)
@@ -498,12 +499,12 @@ void MainWindow::buildUi(const QJsonObject &config)
             lineEdit->setProperty("argFlag", arg["flag"].toString());
             lineEdit->setProperty("argName", name);
         } else if (type == "integer") {
-            QSpinBox *spinBox = new QSpinBox(this);
-            spinBox->setRange(-999999, 999999);
-            layout->addRow(label, spinBox);
-            spinBox->setProperty("argType", type);
-            spinBox->setProperty("argFlag", arg["flag"].toString());
-            spinBox->setProperty("argName", name);
+            QLineEdit *lineEdit = new QLineEdit(this);
+            lineEdit->setValidator(new QIntValidator(this));
+            layout->addRow(label, lineEdit);
+            lineEdit->setProperty("argType", type);
+            lineEdit->setProperty("argFlag", arg["flag"].toString());
+            lineEdit->setProperty("argName", name);
         } else if (type == "boolean") { // Handle boolean without exclusive group
             QCheckBox *checkBox = new QCheckBox(name, this);
             layout->addRow(checkBox);
@@ -615,8 +616,6 @@ void MainWindow::on_btnRun_clicked()
                     QString paramValue;
                     if (QLineEdit *lineEdit = qobject_cast<QLineEdit*>(fieldWidget)) {
                         paramValue = lineEdit->text();
-                    } else if (QSpinBox *spinBox = qobject_cast<QSpinBox*>(fieldWidget)) {
-                        paramValue = QString::number(spinBox->value());
                     } else if (QWidget *container = qobject_cast<QWidget*>(fieldWidget)) {
                         QLineEdit* lineEdit = container->findChild<QLineEdit*>();
                         if(lineEdit) {
@@ -624,10 +623,10 @@ void MainWindow::on_btnRun_clicked()
                         }
                     }
 
-                    if (!flag.isEmpty()) {
-                        commandLine += " " + flag;
-                    }
                     if (!paramValue.isEmpty()) {
+                        if (!flag.isEmpty()) {
+                            commandLine += " " + flag;
+                        }
                         if (type == "raw_string") {
                             commandLine += " " + paramValue;
                         } else {

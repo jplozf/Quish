@@ -84,6 +84,26 @@
             "flag": "-V"
           },
           {
+            "name": "First TTL",
+            "type": "integer",
+            "flag": "-f"
+          },
+          {
+            "name": "Gateway",
+            "type": "raw_string",
+            "flag": "-g"
+          },
+          {
+            "name": "Interface",
+            "type": "raw_string",
+            "flag": "-i"
+          },
+          {
+            "name": "Max hops",
+            "type": "integer",
+            "flag": "-m"
+          },
+          {
             "name": "Host",
             "type": "raw_string",
             "flag": ""
