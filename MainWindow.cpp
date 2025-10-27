@@ -59,6 +59,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->statusbar->addWidget(m_statusLabel);
 
     lblCommand = findChild<QLabel*>(tr("lblCommand"));
+    m_lblCursorPosition = findChild<QLabel*>("lblCursorPosition");
+    if (m_lblCursorPosition) {
+        connect(ui->txtEditFile, &CodeEditor::cursorPositionChanged, this, &MainWindow::updateCursorPositionLabel);
+    }
 
     QSettings settings("MyCompany", "Quish");
     restoreGeometry(settings.value("geometry").toByteArray());
@@ -235,6 +239,16 @@ void MainWindow::checkForNewVersion()
 
     QNetworkRequest request(QUrl("https://api.github.com/repos/jplozf/Quish/commits/main"));
     manager->get(request);
+}
+
+void MainWindow::updateCursorPositionLabel()
+{
+    if (m_lblCursorPosition) {
+        QTextCursor cursor = ui->txtEditFile->textCursor();
+        int line = cursor.blockNumber() + 1;
+        int column = cursor.columnNumber() + 1;
+        m_lblCursorPosition->setText(QString("Ln %1, Col %2").arg(line).arg(column));
+    }
 }
 
 void MainWindow::handleThemeChange(int index)

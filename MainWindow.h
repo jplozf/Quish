@@ -56,6 +56,7 @@ private slots:
     void restoreActionTriggered();
     void onSettingChanged(const QString &param, const QVariant &value);
     void checkForNewVersion();
+    void updateCursorPositionLabel();
 private:
     void createTrayIcon();
     void destroyTrayIcon();
@@ -92,5 +93,6 @@ private:
     QComboBox *m_themeComboBox;
     QTextEdit *m_txtHelp;
     QLabel *lblCommand;
+    QLabel *m_lblCursorPosition;
 };
 #endif // MAINWINDOW_H
