@@ -28,6 +28,7 @@
 #include <QClipboard>
 #include <QIntValidator>
 #include "settings.h"
+#include "JsonHighlighter.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -53,6 +54,7 @@ MainWindow::MainWindow(QWidget *parent)
     monospaceFont.setStyleHint(QFont::Monospace);
     ui->txtOutput->setFont(monospaceFont);
     m_txtHelp->setFont(monospaceFont);
+    m_highlighter = new JsonHighlighter(ui->txtEditFile->document());
     m_statusLabel = new QLabel(this);
     ui->statusbar->addWidget(m_statusLabel);
 
@@ -113,7 +115,7 @@ MainWindow::MainWindow(QWidget *parent)
     for (const QString &theme : themeFiles) {
         m_themeComboBox->addItem(theme);
     }
-    connect(m_themeComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::on_themeComboBox_currentIndexChanged);
+    connect(m_themeComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::handleThemeChange);
 
     // System Tray Icon setup
     if (m_appSettings.get("minimizeToTray").toBool()) {
@@ -235,7 +237,7 @@ void MainWindow::checkForNewVersion()
     manager->get(request);
 }
 
-void MainWindow::on_themeComboBox_currentIndexChanged(int index)
+void MainWindow::handleThemeChange(int index)
 {
     QString selectedTheme = m_themeComboBox->itemText(index);
     if (selectedTheme == "Default") {

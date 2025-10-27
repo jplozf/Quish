@@ -27,7 +27,13 @@
 #include <QNetworkReply>
 
 QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
+#include "CodeEditor.h"
+
+namespace Ui {
+class MainWindow;
+}
+
+class JsonHighlighter;
 QT_END_NAMESPACE
 
 class MainWindow : public QMainWindow
@@ -45,12 +51,20 @@ private slots:
     void on_btnClear_clicked();
     void on_btnCopy_clicked();
     void on_btnSaveFile_clicked();
-    void on_themeComboBox_currentIndexChanged(int index);
+    void handleThemeChange(int index);
     void trayIconActivated(QSystemTrayIcon::ActivationReason reason);
     void restoreActionTriggered();
     void onSettingChanged(const QString &param, const QVariant &value);
     void checkForNewVersion();
 private:
+    void createTrayIcon();
+    void destroyTrayIcon();
+    bool loadConfigFile(const QString &filePath);
+    void buildUi(const QJsonObject &config);
+    void clearForm();
+    void applyTheme(const QString &themeName);
+    void closeEvent(QCloseEvent *event) override;
+
     Ui::MainWindow *ui;
     QJsonObject m_rootConfig;
     QJsonObject m_currentConfig;
@@ -64,26 +78,19 @@ private:
     QAction *m_runAction;
     QAction *m_breakAction;
     QAction *m_saveAction;
-    QLabel *lblCommand;
-    Settings m_appSettings;
+    JsonHighlighter *m_highlighter;
     QSystemTrayIcon *m_trayIcon;
     QMenu *m_trayMenu;
     QAction *m_restoreAction;
     QAction *m_quitAction;
     bool m_isQuitting = false;
+    Settings m_appSettings;
     QCheckBox *m_sudoCheckBox;
     QCheckBox *m_clearOutputCheckBox;
     QLabel *m_workingDirectoryLabel;
     QLineEdit *m_workingDirectoryLineEdit;
     QComboBox *m_themeComboBox;
     QTextEdit *m_txtHelp;
-    void buildUi(const QJsonObject &config);
-    void clearForm();
-    bool loadConfigFile(const QString &filePath);
-    void applyTheme(const QString &themeName);
-    void createTrayIcon();
-    void destroyTrayIcon();
-protected:
-    void closeEvent(QCloseEvent *event) override;
+    QLabel *lblCommand;
 };
 #endif // MAINWINDOW_H

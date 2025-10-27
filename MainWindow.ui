@@ -186,7 +186,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QTextEdit" name="txtEditFile">
+               <widget class="CodeEditor" name="txtEditFile">
                 <property name="font">
                  <font>
                   <family>Cascadia Code</family>
@@ -302,4 +302,11 @@
   <include location="Quish.qrc"/>
  </resources>
  <connections/>
+ <customwidgets>
+  <customwidget>
+   <class>CodeEditor</class>
+   <extends>QPlainTextEdit</extends>
+   <header>CodeEditor.h</header>
+  </customwidget>
+ </customwidgets>
 </ui>

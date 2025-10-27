@@ -17,11 +17,15 @@ DEFINES += APP_VERSION_STRING=\\\"$$VERSION\\\"
 SOURCES += \
     main.cpp \
     MainWindow.cpp \
-    settings.cpp
+    settings.cpp \
+    CodeEditor.cpp \
+    JsonHighlighter.cpp
 
 HEADERS += \
     MainWindow.h \
-    settings.h
+    settings.h \
+    CodeEditor.h \
+    JsonHighlighter.h
 
 FORMS += \
     MainWindow.ui
