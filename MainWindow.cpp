@@ -44,7 +44,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Programmatically add Help tab
     QWidget *helpTab = new QWidget();
-    ui->tabWidget->insertTab(1, helpTab, "Help");
+    ui->tabWidget->insertTab(1, helpTab, QIcon(":/icons/Question.png"), "Help");
     QGridLayout *helpLayout = new QGridLayout(helpTab);
     m_txtHelp = new QTextEdit(helpTab);
     m_txtHelp->setReadOnly(true);

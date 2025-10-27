@@ -95,6 +95,10 @@
            <number>1</number>
           </property>
           <widget class="QWidget" name="tabOutput">
+           <attribute name="icon">
+            <iconset resource="Quish.qrc">
+             <normaloff>:/icons/Computer.png</normaloff>:/icons/Computer.png</iconset>
+           </attribute>
            <attribute name="title">
             <string>Output</string>
            </attribute>
@@ -172,6 +176,10 @@
            </layout>
           </widget>
           <widget class="QWidget" name="tabEdit">
+           <attribute name="icon">
+            <iconset resource="Quish.qrc">
+             <normaloff>:/icons/Document Text.png</normaloff>:/icons/Document Text.png</iconset>
+           </attribute>
            <attribute name="title">
             <string>Edit</string>
            </attribute>
@@ -241,6 +249,10 @@
            </layout>
           </widget>
           <widget class="QWidget" name="tabSettings">
+           <attribute name="icon">
+            <iconset resource="Quish.qrc">
+             <normaloff>:/icons/Gear.png</normaloff>:/icons/Gear.png</iconset>
+           </attribute>
            <attribute name="title">
             <string>Settings</string>
            </attribute>
@@ -305,10 +317,6 @@
    </property>
   </action>
  </widget>
- <resources>
-  <include location="Quish.qrc"/>
- </resources>
- <connections/>
  <customwidgets>
   <customwidget>
    <class>CodeEditor</class>
@@ -316,4 +324,8 @@
    <header>CodeEditor.h</header>
   </customwidget>
  </customwidgets>
+ <resources>
+  <include location="Quish.qrc"/>
+ </resources>
+ <connections/>
 </ui>
