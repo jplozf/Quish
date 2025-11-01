@@ -58,7 +58,7 @@ MainWindow::MainWindow(QWidget *parent)
     m_statusLabel = new QLabel(this);
     ui->statusbar->addWidget(m_statusLabel);
 
-    lblCommand = findChild<QLabel*>(tr("lblCommand"));
+    lblCommand = findChild<QLineEdit*>(tr("lblCommand"));
     m_lblCursorPosition = findChild<QLabel*>("lblCursorPosition");
     if (m_lblCursorPosition) {
         connect(ui->txtEditFile, &CodeEditor::cursorPositionChanged, this, &MainWindow::updateCursorPositionLabel);
@@ -358,6 +358,7 @@ void MainWindow::on_cmbCommands_currentIndexChanged(int index)
 
     m_currentConfig = commands[index].toObject();
     buildUi(m_currentConfig);
+    updateCommandLineLabel();
 
     m_txtHelp->clear();
     if (m_currentConfig.contains("man")) {
@@ -365,7 +366,15 @@ void MainWindow::on_cmbCommands_currentIndexChanged(int index)
         QProcess *process = new QProcess(this);
         process->setProcessChannelMode(QProcess::MergedChannels);
         connect(process, &QProcess::readyReadStandardOutput, this, [this, process]() {
-            m_txtHelp->insertPlainText(process->readAllStandardOutput());
+            QString output = process->readAllStandardOutput();
+            QStringList lines = output.split('\n');
+            QString filteredOutput;
+            for (const QString &line : lines) {
+                if (!line.startsWith("troff:")) {
+                    filteredOutput += line + '\n';
+                }
+            }
+            m_txtHelp->insertPlainText(filteredOutput);
         });
         connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, [this, process](int exitCode, QProcess::ExitStatus exitStatus) {
             Q_UNUSED(exitStatus);
@@ -402,6 +411,7 @@ void MainWindow::on_cmbTopics_currentIndexChanged(int index)
     } else {
         clearForm();
     }
+    updateCommandLineLabel();
 }
 
 void MainWindow::buildUi(const QJsonObject &config)
@@ -427,17 +437,20 @@ void MainWindow::buildUi(const QJsonObject &config)
     // Add "Run as Sudo" checkbox
     m_sudoCheckBox = new QCheckBox(tr("Run as Sudo"), ui->scrollAreaWidgetContents);
     layout->addRow(m_sudoCheckBox);
+    connect(m_sudoCheckBox, &QCheckBox::toggled, this, &MainWindow::updateCommandLineLabel);
 
     // Add "Clear Output Before Run" checkbox
     m_clearOutputCheckBox = new QCheckBox(tr("Clear Output Before Run"), ui->scrollAreaWidgetContents);
     layout->addRow(m_clearOutputCheckBox);
+    connect(m_clearOutputCheckBox, &QCheckBox::toggled, this, &MainWindow::updateCommandLineLabel);
 
     m_workingDirectoryLabel = new QLabel(tr("Folder"), ui->scrollAreaWidgetContents);
     m_workingDirectoryLineEdit = new QLineEdit(QDir::homePath(), ui->scrollAreaWidgetContents);
+    connect(m_workingDirectoryLineEdit, &QLineEdit::textChanged, this, &MainWindow::updateCommandLineLabel);
 
     QWidget *widget = new QWidget(this);
     QHBoxLayout *hLayout = new QHBoxLayout(widget);
-    QPushButton *button = new QPushButton("...", this);
+    QPushButton *button = new QPushButton("...", ui->scrollAreaWidgetContents);
     QFontMetrics fm(button->font());
     int width = fm.horizontalAdvance("...") + 20;
     button->setFixedWidth(width);
@@ -465,10 +478,9 @@ void MainWindow::buildUi(const QJsonObject &config)
         QString type = arg["type"].toString();
         QString exclusiveGroup = arg["exclusive_group"].toString();
 
-        QLabel *label = new QLabel(name, this);
 
         if (type == "boolean" && !exclusiveGroup.isEmpty()) {
-            QRadioButton *radioButton = new QRadioButton(name, this);
+            QRadioButton *radioButton = new QRadioButton(name, ui->scrollAreaWidgetContents);
             layout->addRow(radioButton);
             radioButton->setProperty("argType", type);
             radioButton->setProperty("argFlag", arg["flag"].toString());
@@ -479,11 +491,14 @@ void MainWindow::buildUi(const QJsonObject &config)
             }
             m_buttonGroups[exclusiveGroup]->addButton(radioButton);
             m_exclusiveGroupWidgets[exclusiveGroup].append(radioButton);
-        } else if (type == "file" || type == "folder") {
-            QWidget *widget = new QWidget(this);
+            connect(radioButton, &QRadioButton::toggled, this, &MainWindow::updateCommandLineLabel);
+        } else if (type == "file" || type == "folder" || type == "newfile" || type == "newfolder") {
+            QLabel *label = new QLabel(name, ui->scrollAreaWidgetContents);
+            QWidget *widget = new QWidget(ui->scrollAreaWidgetContents);
             QHBoxLayout *hLayout = new QHBoxLayout(widget);
             QLineEdit *lineEdit = new QLineEdit(this);
-            QPushButton *button = new QPushButton("...", this);
+            connect(lineEdit, &QLineEdit::textChanged, this, &MainWindow::updateCommandLineLabel);
+            QPushButton *button = new QPushButton("...", ui->scrollAreaWidgetContents);
             hLayout->addWidget(lineEdit);
             hLayout->addWidget(button);
             hLayout->setContentsMargins(0, 0, 0, 0);
@@ -493,6 +508,20 @@ void MainWindow::buildUi(const QJsonObject &config)
             if (type == "file") {
                 connect(button, &QPushButton::clicked, this, [this, lineEdit]() {
                     QString path = QFileDialog::getOpenFileName(this, "Select File");
+                    if (!path.isEmpty()) {
+                        lineEdit->setText(path);
+                    }
+                });
+            } else if (type == "newfile") {
+                connect(button, &QPushButton::clicked, this, [this, lineEdit]() {
+                    QString path = QFileDialog::getSaveFileName(this, "Select File");
+                    if (!path.isEmpty()) {
+                        lineEdit->setText(path);
+                    }
+                });
+            } else if (type == "newfolder") {
+                connect(button, &QPushButton::clicked, this, [this, lineEdit]() {
+                    QString path = QFileDialog::getExistingDirectory(this, "Select Folder");
                     if (!path.isEmpty()) {
                         lineEdit->setText(path);
                     }
@@ -508,22 +537,44 @@ void MainWindow::buildUi(const QJsonObject &config)
             widget->setProperty("argType", type);
             widget->setProperty("argFlag", arg["flag"].toString());
             widget->setProperty("argName", name);
+        } else if (type == "files") {
+            QLabel *label = new QLabel(name, ui->scrollAreaWidgetContents);
+            QListWidget *listWidget = new QListWidget(ui->scrollAreaWidgetContents);
+            QPushButton *button = new QPushButton("...", ui->scrollAreaWidgetContents);
+            connect(button, &QPushButton::clicked, this, [this, listWidget]() {
+                QStringList files = QFileDialog::getOpenFileNames(this, "Select Files");
+                if (!files.isEmpty()) {
+                    listWidget->addItems(files);
+                    updateCommandLineLabel(); // Update after adding files
+                }
+            });
+            connect(listWidget, &QListWidget::itemChanged, this, &MainWindow::updateCommandLineLabel);
+            layout->addRow(label, listWidget);
+            layout->addRow(button);
+            listWidget->setProperty("argType", type);
+            listWidget->setProperty("argFlag", arg["flag"].toString());
+            listWidget->setProperty("argName", name);
         } else if (type == "string" || type == "raw_string") {
-            QLineEdit *lineEdit = new QLineEdit(this);
+            QLabel *label = new QLabel(name, ui->scrollAreaWidgetContents);
+            QLineEdit *lineEdit = new QLineEdit(ui->scrollAreaWidgetContents);
             layout->addRow(label, lineEdit);
+            connect(lineEdit, &QLineEdit::textChanged, this, &MainWindow::updateCommandLineLabel);
             lineEdit->setProperty("argType", type);
             lineEdit->setProperty("argFlag", arg["flag"].toString());
             lineEdit->setProperty("argName", name);
         } else if (type == "integer") {
-            QLineEdit *lineEdit = new QLineEdit(this);
+            QLabel *label = new QLabel(name, ui->scrollAreaWidgetContents);
+            QLineEdit *lineEdit = new QLineEdit(ui->scrollAreaWidgetContents);
             lineEdit->setValidator(new QIntValidator(this));
             layout->addRow(label, lineEdit);
+            connect(lineEdit, &QLineEdit::textChanged, this, &MainWindow::updateCommandLineLabel);
             lineEdit->setProperty("argType", type);
             lineEdit->setProperty("argFlag", arg["flag"].toString());
             lineEdit->setProperty("argName", name);
         } else if (type == "boolean") { // Handle boolean without exclusive group
-            QCheckBox *checkBox = new QCheckBox(name, this);
+            QCheckBox *checkBox = new QCheckBox(name, ui->scrollAreaWidgetContents);
             layout->addRow(checkBox);
+            connect(checkBox, &QCheckBox::toggled, this, &MainWindow::updateCommandLineLabel);
             checkBox->setProperty("argType", type);
             checkBox->setProperty("argFlag", arg["flag"].toString());
             checkBox->setProperty("argName", name);
@@ -544,156 +595,342 @@ void MainWindow::applyTheme(const QString &themeName)
 }
 
 void MainWindow::on_btnRun_clicked()
+
 {
-    if (m_currentConfig.isEmpty()) {
-        QMessageBox::warning(this, tr("Warning"), tr("No configuration loaded"));
+
+    QString commandLineForDisplay = buildCommandLine();
+    if (commandLineForDisplay.isEmpty()) {
         return;
     }
-
-    QString executable = m_currentConfig["executable"].toString();
-    if (executable.isEmpty()) {
-        QMessageBox::critical(this, tr("Error"), tr("No executable specified in configuration"));
-        return;
-    }
-
-            QString commandLine = executable;
-        
-                if (m_sudoCheckBox && m_sudoCheckBox->isChecked()) {
-        
-                    commandLine = "sudo " + commandLine;
-        
-                }
-        
-            
-        
-                if (m_clearOutputCheckBox && m_clearOutputCheckBox->isChecked()) {
-        
-                    ui->txtOutput->clear();
-        
-                }
-        
-            
-        
-                QFormLayout *formLayout = qobject_cast<QFormLayout*>(ui->scrollAreaWidgetContents->layout());        QJsonArray configArgs = m_currentConfig["arguments"].toArray();
-
-        for (const QJsonValue &value : configArgs) {
-            QJsonObject arg = value.toObject();
-            QString name = arg["name"].toString();
-            QString type = arg["type"].toString();
-            QString flag = arg["flag"].toString();
-            QString exclusiveGroup = arg["exclusive_group"].toString();
-
-            if (type == "boolean") {
-                if (!exclusiveGroup.isEmpty()) {
-                    if (m_buttonGroups.contains(exclusiveGroup)) {
-                        QAbstractButton *checkedButton = m_buttonGroups[exclusiveGroup]->checkedButton();
-                        if (checkedButton && checkedButton->property("argFlag").toString() == flag) {
-                            commandLine += " " + flag;
-                        }
-                    }
-                } else { // Non-exclusive boolean (checkbox)
-                    // Find the QCheckBox by its flag or name
-                    QList<QCheckBox*> checkBoxes = ui->scrollAreaWidgetContents->findChildren<QCheckBox*>();
-                    for (QCheckBox *checkBox : checkBoxes) {
-                        if (checkBox->property("argFlag").toString() == flag && checkBox->isChecked()) {
-                            commandLine += " " + flag;
-                            break;
-                        }
-                    }
-                }
-            } else { // string, integer, file, folder
-                // Find the corresponding widget in the form layout
-                QWidget *fieldWidget = nullptr;
-                for (int i = 0; i < formLayout->rowCount(); ++i) {
-                    QLayoutItem *fieldItem = formLayout->itemAt(i, QFormLayout::FieldRole);
-                    if (fieldItem && fieldItem->widget()) {
-                        if (!flag.isEmpty() && fieldItem->widget()->property("argFlag").toString() == flag) {
-                            fieldWidget = fieldItem->widget();
-                            break;
-                        } else if (flag.isEmpty() && fieldItem->widget()->property("argName").toString() == name) {
-                            fieldWidget = fieldItem->widget();
-                            break;
-                        } else if (QWidget *container = qobject_cast<QWidget*>(fieldItem->widget())) {
-                            QLineEdit* lineEdit = container->findChild<QLineEdit*>();
-                            if (lineEdit) {
-                                if (!flag.isEmpty() && container->property("argFlag").toString() == flag) {
-                                    fieldWidget = container;
-                                    break;
-                                } else if (flag.isEmpty() && container->property("argName").toString() == name) {
-                                    fieldWidget = container;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (fieldWidget) {
-                    QString paramValue;
-                    if (QLineEdit *lineEdit = qobject_cast<QLineEdit*>(fieldWidget)) {
-                        paramValue = lineEdit->text();
-                    } else if (QWidget *container = qobject_cast<QWidget*>(fieldWidget)) {
-                        QLineEdit* lineEdit = container->findChild<QLineEdit*>();
-                        if(lineEdit) {
-                            paramValue = lineEdit->text();
-                        }
-                    }
-
-                    if (!paramValue.isEmpty()) {
-                        if (!flag.isEmpty()) {
-                            commandLine += " " + flag;
-                        }
-                        if (type == "raw_string") {
-                            commandLine += " " + paramValue;
-                        } else {
-                            if (paramValue.contains(' ')) {
-                                commandLine += " \"" + paramValue + "\"";
-                            } else {
-                                commandLine += " " + paramValue;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    
-        ui->tabWidget->setCurrentIndex(0);
-        m_timer.restart();
-        if (m_btnBreak) {
-            m_btnBreak->setEnabled(true);
-        }
-        m_process = new QProcess(this);
-        m_process->setProcessChannelMode(QProcess::MergedChannels);
-        connect(m_process, &QProcess::readyReadStandardOutput, this, [this]() {
-            ui->txtOutput->insertPlainText(m_process->readAllStandardOutput());
-            ui->txtOutput->verticalScrollBar()->setValue(ui->txtOutput->verticalScrollBar()->maximum());
-        });
-        connect(m_process,
-                QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-                this,
-                [this](int exitCode, QProcess::ExitStatus exitStatus) {
-                    Q_UNUSED(exitStatus);
-                    ui->txtOutput->append(m_process->readAllStandardOutput());
-                    QString color = (exitCode == 0) ? "green" : "red";
-                    ui->txtOutput->append(QString("<span style=\"color:%1;\">\nProcess finished with exit code %2</span>").arg(color).arg(exitCode));
-                    m_statusLabel->setText(QString("Finished with exit code %1 in %2 ms")
-                                               .arg(exitCode)
-                                               .arg(m_timer.elapsed()));
-                    if (m_btnBreak) {
-                        m_btnBreak->setEnabled(false);
-                    }
-                    m_process->deleteLater();
-                    m_process = nullptr;
-                });
-    
-        QStringList commandParts = commandLine.split(" ");
-        QString program = commandParts.takeFirst();
-        m_process->setWorkingDirectory(m_workingDirectoryLineEdit->text());
-        m_process->start(program, commandParts);
 
     if (lblCommand) {
+        lblCommand->setText(commandLineForDisplay);
+    }
+
+    QString commandLineForExecution = "stdbuf -o L " + commandLineForDisplay;
+
+
+
+    if (m_clearOutputCheckBox && m_clearOutputCheckBox->isChecked()) {
+
+        ui->txtOutput->clear();
+
+    }
+
+
+
+    ui->tabWidget->setCurrentIndex(0);
+
+    m_timer.restart();
+
+    if (m_btnBreak) {
+
+        m_btnBreak->setEnabled(true);
+
+    }
+
+    m_process = new QProcess(this);
+
+    m_process->setProcessChannelMode(QProcess::MergedChannels);
+
+        connect(m_process, &QProcess::readyReadStandardOutput, this, [this]() {
+
+            ui->txtOutput->insertPlainText(m_process->readAll());
+
+            ui->txtOutput->verticalScrollBar()->setValue(ui->txtOutput->verticalScrollBar()->maximum());
+
+        });
+
+    connect(m_process,
+
+            QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+
+            this,
+
+            [this](int exitCode, QProcess::ExitStatus exitStatus) {
+
+                Q_UNUSED(exitStatus);
+
+                ui->txtOutput->append(m_process->readAllStandardOutput());
+
+                QString color = (exitCode == 0) ? "green" : "red";
+
+                ui->txtOutput->append(
+
+                    QString("<span style=\"color:%1;\">\nProcess finished " "with exit code " "%2</span><br><br>")
+
+                        .arg(color)
+
+                        .arg(exitCode));
+
+                m_statusLabel->setText(
+
+                    QString("Finished with exit code %1 in %2 ms").arg(exitCode).arg(m_timer.elapsed()));
+
+                if (m_btnBreak) {
+
+                    m_btnBreak->setEnabled(false);
+
+                }
+
+                m_process->deleteLater();
+
+                m_process = nullptr;
+
+            });
+
+
+
+    QStringList commandParts = commandLineForExecution.split(" ");
+
+    QString program = commandParts.takeFirst();
+
+    m_process->setWorkingDirectory(m_workingDirectoryLineEdit->text());
+
+    m_process->start(program, commandParts);
+}
+
+
+
+void MainWindow::updateCommandLineLabel()
+
+{
+
+    QString commandLine = buildCommandLine();
+
+    if (lblCommand) {
+
         lblCommand->setText(commandLine);
-    }}
+
+    }
+
+}
+
+
+
+QString MainWindow::buildCommandLine()
+
+{
+
+    if (m_currentConfig.isEmpty()) {
+
+        QMessageBox::warning(this, tr("Warning"), tr("No configuration loaded"));
+
+        return "";
+
+    }
+
+
+
+                QString executable = m_currentConfig["executable"].toString();
+
+
+
+                if (executable.isEmpty()) {
+
+
+
+                    QMessageBox::critical(this, tr("Error"), tr("No executable specified in configuration"));
+
+
+
+                    return "";
+
+
+
+                }
+
+
+
+            
+
+
+
+                QString commandLine = executable;
+
+
+
+    if (m_sudoCheckBox && m_sudoCheckBox->isChecked()) {
+
+        commandLine = "sudo " + commandLine;
+
+    }
+
+
+
+    QFormLayout *formLayout = qobject_cast<QFormLayout*>(ui->scrollAreaWidgetContents->layout());
+
+    QJsonArray configArgs = m_currentConfig["arguments"].toArray();
+
+
+
+    for (const QJsonValue &value : configArgs) {
+
+        QJsonObject arg = value.toObject();
+
+        QString name = arg["name"].toString();
+
+        QString type = arg["type"].toString();
+
+        QString flag = arg["flag"].toString();
+
+        QString exclusiveGroup = arg["exclusive_group"].toString();
+
+
+
+        if (type == "boolean") {
+
+            if (!exclusiveGroup.isEmpty()) {
+
+                if (m_buttonGroups.contains(exclusiveGroup)) {
+
+                    QAbstractButton *checkedButton = m_buttonGroups[exclusiveGroup]->checkedButton();
+
+                    if (checkedButton && checkedButton->property("argFlag").toString() == flag) {
+
+                        commandLine += " " + flag;
+
+                    }
+
+                }
+
+            } else { // Non-exclusive boolean (checkbox)
+
+                QList<QCheckBox*> checkBoxes = ui->scrollAreaWidgetContents->findChildren<QCheckBox*>();
+
+                for (QCheckBox *checkBox : checkBoxes) {
+
+                    if (checkBox->property("argFlag").toString() == flag && checkBox->isChecked()) {
+
+                        commandLine += " " + flag;
+
+                        break;
+
+                    }
+
+                }
+
+            }
+
+        } else { // string, integer, file, folder
+
+            QWidget *fieldWidget = nullptr;
+
+            for (int i = 0; i < formLayout->rowCount(); ++i) {
+
+                QLayoutItem *fieldItem = formLayout->itemAt(i, QFormLayout::FieldRole);
+
+                if (fieldItem && fieldItem->widget()) {
+
+                    if (!flag.isEmpty() && fieldItem->widget()->property("argFlag").toString() == flag) {
+
+                        fieldWidget = fieldItem->widget();
+
+                        break;
+
+                    } else if (flag.isEmpty() && fieldItem->widget()->property("argName").toString() == name) {
+
+                        fieldWidget = fieldItem->widget();
+
+                        break;
+
+                    } else if (QWidget *container = qobject_cast<QWidget*>(fieldItem->widget())) {
+
+                        QLineEdit* lineEdit = container->findChild<QLineEdit*>();
+
+                        if (lineEdit) {
+
+                            if (!flag.isEmpty() && container->property("argFlag").toString() == flag) {
+
+                                fieldWidget = container;
+
+                                break;
+
+                            } else if (flag.isEmpty() && container->property("argName").toString() == name) {
+
+                                fieldWidget = container;
+
+                                break;
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+
+
+            if (fieldWidget) {
+
+                QString paramValue;
+
+                if (QLineEdit *lineEdit = qobject_cast<QLineEdit*>(fieldWidget)) {
+
+                    paramValue = lineEdit->text();
+
+                } else if (QWidget *container = qobject_cast<QWidget*>(fieldWidget)) {
+
+                    QLineEdit* lineEdit = container->findChild<QLineEdit*>();
+
+                    if(lineEdit) {
+
+                        paramValue = lineEdit->text();
+
+                    }
+
+                } else if (QListWidget *listWidget = qobject_cast<QListWidget*>(fieldWidget)) {
+
+                    for (int j = 0; j < listWidget->count(); ++j) {
+
+                        paramValue += " " + listWidget->item(j)->text();
+
+                    }
+
+                }
+
+
+
+                if (!paramValue.isEmpty()) {
+
+                    if (!flag.isEmpty()) {
+
+                        commandLine += " " + flag;
+
+                    }
+
+                    if (type == "raw_string") {
+
+                        commandLine += " " + paramValue;
+
+                    } else {
+
+                        if (paramValue.contains(' ')) {
+
+                            commandLine += " \"" + paramValue + "\"";
+
+                        } else {
+
+                            commandLine += " " + paramValue;
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    return commandLine;
+
+}
 
 void MainWindow::on_btnBreak_clicked()
 {
@@ -764,6 +1001,7 @@ void MainWindow::clearForm()
     }
     m_buttonGroups.clear();
     m_exclusiveGroupWidgets.clear();
+    updateCommandLineLabel();
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)

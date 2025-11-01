@@ -24,6 +24,7 @@
 #include <QNetworkAccessManager>
 #include <QRadioButton>
 #include <QSettings>
+#include <QListWidget>
 #include <QNetworkReply>
 
 QT_BEGIN_NAMESPACE
@@ -57,7 +58,9 @@ private slots:
     void onSettingChanged(const QString &param, const QVariant &value);
     void checkForNewVersion();
     void updateCursorPositionLabel();
+    void updateCommandLineLabel();
 private:
+    QString buildCommandLine();
     void createTrayIcon();
     void destroyTrayIcon();
     bool loadConfigFile(const QString &filePath);
@@ -92,7 +95,7 @@ private:
     QLineEdit *m_workingDirectoryLineEdit;
     QComboBox *m_themeComboBox;
     QTextEdit *m_txtHelp;
-    QLabel *lblCommand;
+    QLineEdit *lblCommand;
     QLabel *m_lblCursorPosition;
 };
 #endif // MAINWINDOW_H
