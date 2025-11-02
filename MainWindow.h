@@ -59,6 +59,7 @@ private slots:
     void checkForNewVersion();
     void updateCursorPositionLabel();
     void updateCommandLineLabel();
+    void on_tabWidget_currentChanged(int index);
 private:
     QString buildCommandLine();
     void createTrayIcon();
@@ -68,6 +69,8 @@ private:
     void clearForm();
     void applyTheme(const QString &themeName);
     void closeEvent(QCloseEvent *event) override;
+
+    void scrollToCurrentCommandInEditor();
 
     Ui::MainWindow *ui;
     QJsonObject m_rootConfig;

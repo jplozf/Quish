@@ -90,6 +90,8 @@ MainWindow::MainWindow(QWidget *parent)
             this,
             &MainWindow::on_cmbTopics_currentIndexChanged);
 
+    connect(ui->tabWidget, &QTabWidget::currentChanged, this, &MainWindow::on_tabWidget_currentChanged);
+
     m_process = nullptr;
     m_btnBreak = findChild<QPushButton*>(tr("btnBreak"));
     if (m_btnBreak) {
@@ -359,6 +361,9 @@ void MainWindow::on_cmbCommands_currentIndexChanged(int index)
     m_currentConfig = commands[index].toObject();
     buildUi(m_currentConfig);
     updateCommandLineLabel();
+    if (ui->tabWidget->currentIndex() == 2) { // Check if Edit tab is active
+        scrollToCurrentCommandInEditor();
+    }
 
     m_txtHelp->clear();
     if (m_currentConfig.contains("man")) {
@@ -477,10 +482,13 @@ void MainWindow::buildUi(const QJsonObject &config)
         QString name = arg["name"].toString();
         QString type = arg["type"].toString();
         QString exclusiveGroup = arg["exclusive_group"].toString();
+        bool mandatory = arg["mandatory"].toBool();
 
+        QString styleSheet = mandatory ? "color: red;" : "";
 
         if (type == "boolean" && !exclusiveGroup.isEmpty()) {
             QRadioButton *radioButton = new QRadioButton(name, ui->scrollAreaWidgetContents);
+            radioButton->setStyleSheet(styleSheet);
             layout->addRow(radioButton);
             radioButton->setProperty("argType", type);
             radioButton->setProperty("argFlag", arg["flag"].toString());
@@ -494,9 +502,11 @@ void MainWindow::buildUi(const QJsonObject &config)
             connect(radioButton, &QRadioButton::toggled, this, &MainWindow::updateCommandLineLabel);
         } else if (type == "file" || type == "folder" || type == "newfile" || type == "newfolder") {
             QLabel *label = new QLabel(name, ui->scrollAreaWidgetContents);
+            label->setStyleSheet(styleSheet);
             QWidget *widget = new QWidget(ui->scrollAreaWidgetContents);
             QHBoxLayout *hLayout = new QHBoxLayout(widget);
             QLineEdit *lineEdit = new QLineEdit(this);
+            lineEdit->setStyleSheet(styleSheet);
             connect(lineEdit, &QLineEdit::textChanged, this, &MainWindow::updateCommandLineLabel);
             QPushButton *button = new QPushButton("...", ui->scrollAreaWidgetContents);
             hLayout->addWidget(lineEdit);
@@ -539,7 +549,9 @@ void MainWindow::buildUi(const QJsonObject &config)
             widget->setProperty("argName", name);
         } else if (type == "files") {
             QLabel *label = new QLabel(name, ui->scrollAreaWidgetContents);
+            label->setStyleSheet(styleSheet);
             QListWidget *listWidget = new QListWidget(ui->scrollAreaWidgetContents);
+            listWidget->setStyleSheet(styleSheet);
             QPushButton *button = new QPushButton("...", ui->scrollAreaWidgetContents);
             connect(button, &QPushButton::clicked, this, [this, listWidget]() {
                 QStringList files = QFileDialog::getOpenFileNames(this, "Select Files");
@@ -556,7 +568,9 @@ void MainWindow::buildUi(const QJsonObject &config)
             listWidget->setProperty("argName", name);
         } else if (type == "string" || type == "raw_string") {
             QLabel *label = new QLabel(name, ui->scrollAreaWidgetContents);
+            label->setStyleSheet(styleSheet);
             QLineEdit *lineEdit = new QLineEdit(ui->scrollAreaWidgetContents);
+            lineEdit->setStyleSheet(styleSheet);
             layout->addRow(label, lineEdit);
             connect(lineEdit, &QLineEdit::textChanged, this, &MainWindow::updateCommandLineLabel);
             lineEdit->setProperty("argType", type);
@@ -564,7 +578,9 @@ void MainWindow::buildUi(const QJsonObject &config)
             lineEdit->setProperty("argName", name);
         } else if (type == "integer") {
             QLabel *label = new QLabel(name, ui->scrollAreaWidgetContents);
+            label->setStyleSheet(styleSheet);
             QLineEdit *lineEdit = new QLineEdit(ui->scrollAreaWidgetContents);
+            lineEdit->setStyleSheet(styleSheet);
             lineEdit->setValidator(new QIntValidator(this));
             layout->addRow(label, lineEdit);
             connect(lineEdit, &QLineEdit::textChanged, this, &MainWindow::updateCommandLineLabel);
@@ -573,6 +589,7 @@ void MainWindow::buildUi(const QJsonObject &config)
             lineEdit->setProperty("argName", name);
         } else if (type == "boolean") { // Handle boolean without exclusive group
             QCheckBox *checkBox = new QCheckBox(name, ui->scrollAreaWidgetContents);
+            checkBox->setStyleSheet(styleSheet);
             layout->addRow(checkBox);
             connect(checkBox, &QCheckBox::toggled, this, &MainWindow::updateCommandLineLabel);
             checkBox->setProperty("argType", type);
@@ -704,6 +721,65 @@ void MainWindow::updateCommandLineLabel()
 
     }
 
+}
+
+void MainWindow::scrollToCurrentCommandInEditor()
+{
+    if (!m_currentConfig.isEmpty()) {
+        QString commandName = m_currentConfig["name"].toString();
+        if (commandName.isEmpty()) {
+            return;
+        }
+
+        QString searchPattern = QString("\"name\": \"%1\"").arg(commandName);
+        QTextDocument *document = ui->txtEditFile->document();
+        QTextCursor highlightCursor(document);
+        QTextCursor cursor(document);
+
+        cursor.beginEditBlock();
+
+        QTextCharFormat plainFormat(highlightCursor.charFormat());
+        QTextCharFormat colorFormat = plainFormat;
+        colorFormat.setBackground(Qt::yellow);
+
+        while (!highlightCursor.isNull() && !highlightCursor.atEnd()) {
+            highlightCursor = document->find(searchPattern, highlightCursor, QTextDocument::FindWholeWords);
+
+            if (!highlightCursor.isNull()) {
+                // Found the name, now find the start of the JSON object
+                QTextCursor jsonStartCursor = highlightCursor;
+                int braceCount = 0;
+                while (jsonStartCursor.position() > 0) {
+                    jsonStartCursor.movePosition(QTextCursor::PreviousCharacter, QTextCursor::KeepAnchor, 1);
+                    if (jsonStartCursor.selectedText() == "{") {
+                        braceCount++;
+                    } else if (jsonStartCursor.selectedText() == "}") {
+                        braceCount--;
+                    }
+                    if (braceCount == 1) { // Found the opening brace of the object
+                        break;
+                    }
+                    jsonStartCursor.movePosition(QTextCursor::PreviousCharacter, QTextCursor::MoveAnchor, 1);
+                }
+
+                if (jsonStartCursor.position() > 0) {
+                    cursor.setPosition(jsonStartCursor.position());
+                    ui->txtEditFile->setTextCursor(cursor);
+                    ui->txtEditFile->ensureCursorVisible();
+                    break; // Found and positioned, exit loop
+                }
+            }
+        }
+        cursor.endEditBlock();
+    }
+}
+
+void MainWindow::on_tabWidget_currentChanged(int index)
+{
+    // Assuming 'Edit' tab is at index 2 (Output is 0, Help is 1)
+    if (index == 2) {
+        scrollToCurrentCommandInEditor();
+    }
 }
 
 
