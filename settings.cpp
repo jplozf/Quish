@@ -28,6 +28,7 @@ Settings::Settings(QObject *parent)
     // Set the defaults values...
     defaults["minimizeToTray"] = QVariant(false);
     defaults["confirmExit"] = QVariant(true);
+    defaults["statusBarTimeout"] = QVariant(3000); // Default to 3 seconds
 
     // Read the settings from user's settings
     read();
@@ -130,6 +131,17 @@ void Settings::form(QWidget *w) {
     });
     form->addRow(lblConfirmExit, chkConfirmExit);
 
+    // Status Bar Message Timeout setting
+    QLabel *lblStatusBarTimeout = new QLabel(tr("Status Bar Message Timeout (ms)"));
+    QSpinBox *spnStatusBarTimeout = new QSpinBox();
+    spnStatusBarTimeout->setRange(1000, 10000); // 1 to 10 seconds
+    spnStatusBarTimeout->setSingleStep(500);
+    spnStatusBarTimeout->setValue(get("statusBarTimeout").toInt());
+    connect(spnStatusBarTimeout, QOverload<int>::of(&QSpinBox::valueChanged), this, [this, spnStatusBarTimeout]() {
+        handleSpinBoxChanged(spnStatusBarTimeout, "statusBarTimeout");
+    });
+    form->addRow(lblStatusBarTimeout, spnStatusBarTimeout);
+
     // Example of other settings (commented out for now)
     /*
     form->addRow(new QLabel("<b>ᐅ</b>"), new QLabel("<b>VOSTOK'S SETTINGS</b>"));
@@ -174,6 +186,16 @@ void Settings::handleTextChanged(QLabel *lbl, QLineEdit *txt) {
 //******************************************************************************
 void Settings::handleCheckBoxChanged(QCheckBox *chk, const QString &param) {
     QVariant value = QVariant(chk->isChecked());
+    settings[param] = value;
+    emit settingChanged(param, value);
+    write();
+}
+
+//******************************************************************************
+// handleSpinBoxChanged()
+//******************************************************************************
+void Settings::handleSpinBoxChanged(QSpinBox *spinBox, const QString &param) {
+    QVariant value = QVariant(spinBox->value());
     settings[param] = value;
     emit settingChanged(param, value);
     write();

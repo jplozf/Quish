@@ -14,18 +14,18 @@ DEFINES += APP_VERSION_STRING=\\\"$$VERSION\\\"
 # In order to do so, uncomment the following line.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-SOURCES += \
-    main.cpp \
+SOURCES += main.cpp \
     MainWindow.cpp \
-    settings.cpp \
+    JsonHighlighter.cpp \
     CodeEditor.cpp \
-    JsonHighlighter.cpp
+    settings.cpp \
+    SaveCommandDialog.cpp
 
-HEADERS += \
-    MainWindow.h \
-    settings.h \
+HEADERS += MainWindow.h \
+    JsonHighlighter.h \
     CodeEditor.h \
-    JsonHighlighter.h
+    settings.h \
+    SaveCommandDialog.h
 
 FORMS += \
     MainWindow.ui

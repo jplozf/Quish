@@ -43,12 +43,17 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    QLabel *m_lblExitCode;
+    QLabel *m_lblElapsedTime;
+    QTimer *m_statusBarTimer;
+
 private slots:
     void on_actionOpen_triggered();
     void on_cmbTopics_currentIndexChanged(int index);
     void on_cmbCommands_currentIndexChanged(int index);
     void on_btnRun_clicked();
     void on_btnBreak_clicked();
+    void on_btnSaveCommand_clicked();
     void on_btnClear_clicked();
     void on_btnCopy_clicked();
     void on_btnSaveFile_clicked();
@@ -58,8 +63,10 @@ private slots:
     void onSettingChanged(const QString &param, const QVariant &value);
     void checkForNewVersion();
     void updateCursorPositionLabel();
+    void updateFileSizeLabel();
     void updateCommandLineLabel();
     void on_tabWidget_currentChanged(int index);
+    void clearStatusBarMessage();
 private:
     QString buildCommandLine();
     void createTrayIcon();
@@ -100,5 +107,6 @@ private:
     QTextEdit *m_txtHelp;
     QLineEdit *lblCommand;
     QLabel *m_lblCursorPosition;
+    QLabel *m_lblFileSize;
 };
 #endif // MAINWINDOW_H

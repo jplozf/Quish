@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
+#include "SaveCommandDialog.h"
 
 #include <QFileDialog>
 #include <QJsonDocument>
@@ -27,6 +28,7 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QIntValidator>
+#include <QTimer>
 #include "settings.h"
 #include "JsonHighlighter.h"
 
@@ -39,6 +41,9 @@ MainWindow::MainWindow(QWidget *parent)
     , m_workingDirectoryLabel(nullptr)
     , m_workingDirectoryLineEdit(nullptr)
     , m_themeComboBox(nullptr)
+    , m_lblFileSize(nullptr)
+    , m_lblExitCode(nullptr)
+    , m_lblElapsedTime(nullptr)
 {
     ui->setupUi(this);
 
@@ -58,8 +63,29 @@ MainWindow::MainWindow(QWidget *parent)
     m_statusLabel = new QLabel(this);
     ui->statusbar->addWidget(m_statusLabel);
 
+    m_lblExitCode = new QLabel(tr("Exit Code: N/A"), this);
+    m_lblElapsedTime = new QLabel(tr("Elapsed: N/A"), this);
+
+    if (ui->statusbar) {
+        ui->statusbar->addPermanentWidget(m_lblExitCode);
+        ui->statusbar->addPermanentWidget(m_lblElapsedTime);
+    }
+
     lblCommand = findChild<QLineEdit*>(tr("lblCommand"));
     m_lblCursorPosition = findChild<QLabel*>("lblCursorPosition");
+    m_lblFileSize = findChild<QLabel*>("lblFileSize");
+
+    m_statusBarTimer = new QTimer(this);
+    m_statusBarTimer->setSingleShot(true);
+    connect(m_statusBarTimer, &QTimer::timeout, this, &MainWindow::clearStatusBarMessage);
+    m_statusBarTimer->setInterval(m_appSettings.get("statusBarTimeout").toInt());
+
+    connect(&m_appSettings, &Settings::settingChanged, this, [this](const QString &param, const QVariant &value) {
+        if (param == "statusBarTimeout") {
+            m_statusBarTimer->setInterval(value.toInt());
+        }
+    });
+
     if (m_lblCursorPosition) {
         connect(ui->txtEditFile, &CodeEditor::cursorPositionChanged, this, &MainWindow::updateCursorPositionLabel);
     }
@@ -73,6 +99,7 @@ MainWindow::MainWindow(QWidget *parent)
     m_runAction = new QAction(this);
     m_runAction->setShortcut(QKeySequence(Qt::Key_F3));
     connect(m_runAction, &QAction::triggered, this, &MainWindow::on_btnRun_clicked);
+
     this->addAction(m_runAction);
 
     m_breakAction = new QAction(this);
@@ -309,6 +336,7 @@ bool MainWindow::loadConfigFile(const QString &filePath)
     ui->txtEditFile->setPlainText(QString(data));
     m_currentConfigFilePath = filePath;
     ui->lblEditFile->setText(filePath);
+    updateFileSizeLabel();
 
     return true;
 }
@@ -342,7 +370,11 @@ void MainWindow::on_btnSaveFile_clicked()
     file.close();
 
     m_statusLabel->setText(tr("Configuration saved to %1").arg(m_currentConfigFilePath));
+    if (m_statusBarTimer) {
+        m_statusBarTimer->start(); // Use the interval set by the setting
+    }
     loadConfigFile(m_currentConfigFilePath);
+    updateFileSizeLabel();
 }
 
 void MainWindow::on_cmbCommands_currentIndexChanged(int index)
@@ -441,16 +473,26 @@ void MainWindow::buildUi(const QJsonObject &config)
 
     // Add "Run as Sudo" checkbox
     m_sudoCheckBox = new QCheckBox(tr("Run as Sudo"), ui->scrollAreaWidgetContents);
+    m_sudoCheckBox->setObjectName("m_sudoCheckBox");
+    m_sudoCheckBox->setChecked(config.value("sudo").toBool(false));
     layout->addRow(m_sudoCheckBox);
     connect(m_sudoCheckBox, &QCheckBox::toggled, this, &MainWindow::updateCommandLineLabel);
 
     // Add "Clear Output Before Run" checkbox
     m_clearOutputCheckBox = new QCheckBox(tr("Clear Output Before Run"), ui->scrollAreaWidgetContents);
+    m_clearOutputCheckBox->setObjectName("m_clearOutputCheckBox");
+    m_clearOutputCheckBox->setChecked(config.value("clear_output").toBool(false));
     layout->addRow(m_clearOutputCheckBox);
     connect(m_clearOutputCheckBox, &QCheckBox::toggled, this, &MainWindow::updateCommandLineLabel);
 
     m_workingDirectoryLabel = new QLabel(tr("Folder"), ui->scrollAreaWidgetContents);
-    m_workingDirectoryLineEdit = new QLineEdit(QDir::homePath(), ui->scrollAreaWidgetContents);
+    m_workingDirectoryLineEdit = new QLineEdit(ui->scrollAreaWidgetContents);
+    m_workingDirectoryLineEdit->setObjectName("m_workingDirectoryLineEdit");
+    if (config.contains("working_directory")) {
+        m_workingDirectoryLineEdit->setText(config.value("working_directory").toString());
+    } else {
+        m_workingDirectoryLineEdit->setText(QDir::homePath());
+    }
     connect(m_workingDirectoryLineEdit, &QLineEdit::textChanged, this, &MainWindow::updateCommandLineLabel);
 
     QWidget *widget = new QWidget(this);
@@ -493,6 +535,8 @@ void MainWindow::buildUi(const QJsonObject &config)
             radioButton->setProperty("argType", type);
             radioButton->setProperty("argFlag", arg["flag"].toString());
             radioButton->setProperty("exclusiveGroup", exclusiveGroup);
+            radioButton->setProperty("argName", name);
+            radioButton->setProperty("mandatory", mandatory);
 
             if (!m_buttonGroups.contains(exclusiveGroup)) {
                 m_buttonGroups.insert(exclusiveGroup, new QButtonGroup(this));
@@ -500,12 +544,18 @@ void MainWindow::buildUi(const QJsonObject &config)
             m_buttonGroups[exclusiveGroup]->addButton(radioButton);
             m_exclusiveGroupWidgets[exclusiveGroup].append(radioButton);
             connect(radioButton, &QRadioButton::toggled, this, &MainWindow::updateCommandLineLabel);
+            if (arg.contains("default")) {
+                radioButton->setChecked(arg["default"].toBool());
+            }
         } else if (type == "file" || type == "folder" || type == "newfile" || type == "newfolder") {
             QLabel *label = new QLabel(name, ui->scrollAreaWidgetContents);
             label->setStyleSheet(styleSheet);
             QWidget *widget = new QWidget(ui->scrollAreaWidgetContents);
             QHBoxLayout *hLayout = new QHBoxLayout(widget);
             QLineEdit *lineEdit = new QLineEdit(this);
+            if (arg.contains("default")) {
+                lineEdit->setText(arg["default"].toString());
+            }
             lineEdit->setStyleSheet(styleSheet);
             connect(lineEdit, &QLineEdit::textChanged, this, &MainWindow::updateCommandLineLabel);
             QPushButton *button = new QPushButton("...", ui->scrollAreaWidgetContents);
@@ -547,6 +597,7 @@ void MainWindow::buildUi(const QJsonObject &config)
             widget->setProperty("argType", type);
             widget->setProperty("argFlag", arg["flag"].toString());
             widget->setProperty("argName", name);
+            widget->setProperty("mandatory", mandatory);
         } else if (type == "files") {
             QLabel *label = new QLabel(name, ui->scrollAreaWidgetContents);
             label->setStyleSheet(styleSheet);
@@ -566,20 +617,34 @@ void MainWindow::buildUi(const QJsonObject &config)
             listWidget->setProperty("argType", type);
             listWidget->setProperty("argFlag", arg["flag"].toString());
             listWidget->setProperty("argName", name);
+            listWidget->setProperty("mandatory", mandatory);
+            if (arg.contains("default")) {
+                QJsonArray defaultFiles = arg["default"].toArray();
+                for (const QJsonValue &fileVal : defaultFiles) {
+                    listWidget->addItem(fileVal.toString());
+                }
+            }
         } else if (type == "string" || type == "raw_string") {
             QLabel *label = new QLabel(name, ui->scrollAreaWidgetContents);
             label->setStyleSheet(styleSheet);
             QLineEdit *lineEdit = new QLineEdit(ui->scrollAreaWidgetContents);
+            if (arg.contains("default")) {
+                lineEdit->setText(arg["default"].toString());
+            }
             lineEdit->setStyleSheet(styleSheet);
             layout->addRow(label, lineEdit);
             connect(lineEdit, &QLineEdit::textChanged, this, &MainWindow::updateCommandLineLabel);
             lineEdit->setProperty("argType", type);
             lineEdit->setProperty("argFlag", arg["flag"].toString());
             lineEdit->setProperty("argName", name);
+            lineEdit->setProperty("mandatory", mandatory);
         } else if (type == "integer") {
             QLabel *label = new QLabel(name, ui->scrollAreaWidgetContents);
             label->setStyleSheet(styleSheet);
             QLineEdit *lineEdit = new QLineEdit(ui->scrollAreaWidgetContents);
+            if (arg.contains("default")) {
+                lineEdit->setText(QString::number(arg["default"].toInt()));
+            }
             lineEdit->setStyleSheet(styleSheet);
             lineEdit->setValidator(new QIntValidator(this));
             layout->addRow(label, lineEdit);
@@ -587,14 +652,19 @@ void MainWindow::buildUi(const QJsonObject &config)
             lineEdit->setProperty("argType", type);
             lineEdit->setProperty("argFlag", arg["flag"].toString());
             lineEdit->setProperty("argName", name);
+            lineEdit->setProperty("mandatory", mandatory);
         } else if (type == "boolean") { // Handle boolean without exclusive group
             QCheckBox *checkBox = new QCheckBox(name, ui->scrollAreaWidgetContents);
+            if (arg.contains("default")) {
+                checkBox->setChecked(arg["default"].toBool());
+            }
             checkBox->setStyleSheet(styleSheet);
             layout->addRow(checkBox);
             connect(checkBox, &QCheckBox::toggled, this, &MainWindow::updateCommandLineLabel);
             checkBox->setProperty("argType", type);
             checkBox->setProperty("argFlag", arg["flag"].toString());
             checkBox->setProperty("argName", name);
+            checkBox->setProperty("mandatory", mandatory);
         }
     }
 }
@@ -683,6 +753,16 @@ void MainWindow::on_btnRun_clicked()
                 m_statusLabel->setText(
 
                     QString("Finished with exit code %1 in %2 ms").arg(exitCode).arg(m_timer.elapsed()));
+                if (m_statusBarTimer) {
+                    m_statusBarTimer->start(); // Use the interval set by the setting
+                }
+
+                if (m_lblExitCode) {
+                    m_lblExitCode->setText(QString("Exit Code: %1").arg(exitCode));
+                }
+                if (m_lblElapsedTime) {
+                    m_lblElapsedTime->setText(QString("Elapsed: %1 ms").arg(m_timer.elapsed()));
+                }
 
                 if (m_btnBreak) {
 
@@ -774,11 +854,44 @@ void MainWindow::scrollToCurrentCommandInEditor()
     }
 }
 
+void MainWindow::updateFileSizeLabel()
+{
+    if (m_lblFileSize && !m_currentConfigFilePath.isEmpty()) {
+        QFile file(m_currentConfigFilePath);
+        if (file.exists()) {
+            qint64 size = file.size();
+            QString sizeString;
+            if (size < 1024) {
+                sizeString = QString("%1 B").arg(size);
+            } else if (size < 1024 * 1024) {
+                sizeString = QString("%1 KB").arg(size / 1024.0, 0, 'f', 1);
+            } else if (size < 1024 * 1024 * 1024) {
+                sizeString = QString("%1 MB").arg(size / (1024.0 * 1024.0), 0, 'f', 1);
+            } else {
+                sizeString = QString("%1 GB").arg(size / (1024.0 * 1024.0 * 1024.0), 0, 'f', 1);
+            }
+            m_lblFileSize->setText(QString("Size: %1").arg(sizeString));
+        } else {
+            m_lblFileSize->setText("Size: N/A");
+        }
+    } else if (m_lblFileSize) {
+        m_lblFileSize->setText("Size: N/A");
+    }
+}
+
+void MainWindow::clearStatusBarMessage()
+{
+    if (m_statusLabel) {
+        m_statusLabel->clear();
+    }
+}
+
 void MainWindow::on_tabWidget_currentChanged(int index)
 {
     // Assuming 'Edit' tab is at index 2 (Output is 0, Help is 1)
     if (index == 2) {
         scrollToCurrentCommandInEditor();
+        updateFileSizeLabel(); // Update file size when switching to Edit tab
     }
 }
 
@@ -1013,6 +1126,46 @@ void MainWindow::on_btnBreak_clicked()
     if (m_process && m_process->state() == QProcess::Running) {
         m_process->terminate();
         m_statusLabel->setText(tr("Process terminated."));
+    }
+}
+
+void MainWindow::on_btnSaveCommand_clicked()
+{
+    SaveCommandDialog dialog(this);
+    dialog.setWidgets(ui->scrollAreaWidgetContents);
+    dialog.setCommandName(m_currentConfig["name"].toString());
+
+    if (dialog.exec() == QDialog::Accepted) {
+        QJsonObject newCommand = dialog.getNewCommand();
+        // Add the executable from the current command to the new preset
+        newCommand["executable"] = m_currentConfig["executable"].toString();
+
+        QString selectedTopic = ui->cmbTopics->currentText();
+
+        QFile file(m_currentConfigFilePath);
+        if (!file.open(QIODevice::ReadWrite | QIODevice::Text)) {
+            QMessageBox::critical(this, "Error", "Could not open config file for writing.");
+            return;
+        }
+
+        QJsonDocument jsonDoc = QJsonDocument::fromJson(file.readAll());
+        QJsonObject rootObj = jsonDoc.object();
+        QJsonObject topicsObj = rootObj["topics"].toObject();
+        QJsonArray commandsArray = topicsObj[selectedTopic].toArray();
+
+        // Append the new command to the array
+        commandsArray.append(newCommand);
+        topicsObj[selectedTopic] = commandsArray;
+        rootObj["topics"] = topicsObj;
+
+        file.resize(0); // Clear existing content
+        file.write(QJsonDocument(rootObj).toJson(QJsonDocument::Indented));
+        file.close();
+
+        loadConfigFile(m_currentConfigFilePath);
+        // After saving and reloading, select the newly added command
+        ui->cmbTopics->setCurrentText(selectedTopic);
+        ui->cmbCommands->setCurrentText(newCommand["name"].toString());
     }
 }
 

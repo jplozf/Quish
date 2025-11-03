@@ -38,8 +38,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>218</width>
-             <height>292</height>
+             <width>223</width>
+             <height>288</height>
             </rect>
            </property>
            <layout class="QFormLayout" name="formLayout"/>
@@ -83,6 +83,17 @@
             </property>
            </spacer>
           </item>
+          <item>
+           <widget class="QPushButton" name="btnSaveCommand">
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="Quish.qrc">
+              <normaloff>:/icons/Save.png</normaloff>:/icons/Save.png</iconset>
+            </property>
+           </widget>
+          </item>
          </layout>
         </item>
        </layout>
@@ -121,9 +132,6 @@
                <layout class="QHBoxLayout" name="horizontalLayout_3">
                 <item>
                  <widget class="QLineEdit" name="lblCommand">
-                  <property name="readOnly">
-                   <bool>true</bool>
-                  </property>
                   <property name="font">
                    <font>
                     <family>Consolas</family>
@@ -135,9 +143,11 @@
                   <property name="alignment">
                    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
                   </property>
+                  <property name="readOnly">
+                   <bool>true</bool>
+                  </property>
                  </widget>
                 </item>
-
                 <item>
                  <widget class="QPushButton" name="btnClear">
                   <property name="text">
@@ -233,6 +243,13 @@
                   </property>
                  </widget>
                 </item>
+                <item>
+                 <widget class="QLabel" name="lblFileSize">
+                  <property name="text">
+                   <string>Size: 0 KB</string>
+                  </property>
+                 </widget>
+                </item>
                </layout>
               </item>
              </layout>
@@ -287,7 +304,7 @@
      <x>0</x>
      <y>0</y>
      <width>686</width>
-     <height>22</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

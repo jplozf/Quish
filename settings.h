@@ -8,6 +8,7 @@
 #include <QObject>
 #include <QVariant>
 #include <QWidget>
+#include <QSpinBox>
 
 class Settings : public QObject
 {
@@ -30,6 +31,7 @@ private:
 
     void handleTextChanged(QLabel *lbl, QLineEdit *txt); // Forward declaration
     void handleCheckBoxChanged(QCheckBox *chk, const QString &param); // New handler for checkboxes
+    void handleSpinBoxChanged(QSpinBox *spinBox, const QString &param);
 };
 
 #endif // SETTINGS_H
