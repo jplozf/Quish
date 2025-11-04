@@ -61,16 +61,22 @@ MainWindow::MainWindow(QWidget *parent)
     m_txtHelp->setFont(monospaceFont);
     m_highlighter = new JsonHighlighter(ui->txtEditFile->document());
     m_statusLabel = new QLabel(this);
-    ui->statusbar->addWidget(m_statusLabel);
+    m_statusLabel->setStyleSheet("border: 1px solid gray; padding: 1px;");
+    m_statusLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    ui->statusbar->addWidget(m_statusLabel, 1);
 
     m_lblExitCode = new QLabel(tr("Exit Code: N/A"), this);
     m_lblExitCode->setStyleSheet("border: 1px solid gray; padding: 1px;");
     m_lblElapsedTime = new QLabel(tr("Elapsed: N/A"), this);
     m_lblElapsedTime->setStyleSheet("border: 1px solid gray; padding: 1px;");
+    m_lblCommandStatusIcon = new QLabel(this);
+    m_lblCommandStatusIcon->setPixmap(QPixmap(":/icons/led_gray.png").scaledToHeight(16, Qt::SmoothTransformation));
+    m_lblCommandStatusIcon->setStyleSheet("background-color: transparent;");
 
     if (ui->statusbar) {
         ui->statusbar->addPermanentWidget(m_lblExitCode);
         ui->statusbar->addPermanentWidget(m_lblElapsedTime);
+        ui->statusbar->addPermanentWidget(m_lblCommandStatusIcon);
     }
 
     lblCommand = findChild<QLineEdit*>(tr("lblCommand"));
@@ -747,6 +753,13 @@ void MainWindow::on_btnRun_clicked()
 
     ui->tabWidget->setCurrentIndex(0);
 
+    if (m_lblExitCode) {
+        m_lblExitCode->setText(tr("Exit Code: N/A"));
+    }
+    if (m_lblElapsedTime) {
+        m_lblElapsedTime->setText(tr("Elapsed: N/A"));
+    }
+
     m_timer.restart();
 
     if (m_btnBreak) {
@@ -754,6 +767,8 @@ void MainWindow::on_btnRun_clicked()
         m_btnBreak->setEnabled(true);
 
     }
+
+    setCommandRunningStatus(true);
 
     m_process = new QProcess(this);
 
@@ -809,6 +824,8 @@ void MainWindow::on_btnRun_clicked()
                 m_process->deleteLater();
 
                 m_process = nullptr;
+
+                setCommandRunningStatus(false);
 
             });
 
@@ -919,6 +936,17 @@ void MainWindow::clearStatusBarMessage()
 {
     if (m_statusLabel) {
         m_statusLabel->clear();
+    }
+}
+
+void MainWindow::setCommandRunningStatus(bool running)
+{
+    if (m_lblCommandStatusIcon) {
+        if (running) {
+            m_lblCommandStatusIcon->setPixmap(QPixmap(":/icons/led_green.png").scaledToHeight(16, Qt::SmoothTransformation));
+        } else {
+            m_lblCommandStatusIcon->setPixmap(QPixmap(":/icons/led_gray.png").scaledToHeight(16, Qt::SmoothTransformation));
+        }
     }
 }
 

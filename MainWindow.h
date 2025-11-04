@@ -46,6 +46,10 @@ public:
     QLabel *m_lblExitCode;
     QLabel *m_lblElapsedTime;
     QTimer *m_statusBarTimer;
+    QLabel *m_lblCommandStatusIcon;
+
+public slots:
+    void setCommandRunningStatus(bool running);
 
 private slots:
     void on_actionOpen_triggered();

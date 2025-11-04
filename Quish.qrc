@@ -184,5 +184,8 @@
         <file>themes/ConsoleStyle.qss</file>
         <file>themes/Aqua.qss</file>
         <file>themes/AMOLED.qss</file>
+        <file>icons/led_gray.png</file>
+        <file>icons/led_green.png</file>
+        <file>icons/led_red.png</file>
     </qresource>
 </RCC>
