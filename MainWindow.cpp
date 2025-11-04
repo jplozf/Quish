@@ -64,7 +64,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->statusbar->addWidget(m_statusLabel);
 
     m_lblExitCode = new QLabel(tr("Exit Code: N/A"), this);
+    m_lblExitCode->setStyleSheet("border: 1px solid gray; padding: 1px;");
     m_lblElapsedTime = new QLabel(tr("Elapsed: N/A"), this);
+    m_lblElapsedTime->setStyleSheet("border: 1px solid gray; padding: 1px;");
 
     if (ui->statusbar) {
         ui->statusbar->addPermanentWidget(m_lblExitCode);
@@ -111,6 +113,18 @@ MainWindow::MainWindow(QWidget *parent)
     m_saveAction->setShortcut(QKeySequence("Ctrl+S"));
     connect(m_saveAction, &QAction::triggered, this, &MainWindow::on_btnSaveFile_clicked);
     this->addAction(m_saveAction);
+
+    m_helpAction = new QAction(this);
+    m_helpAction->setShortcut(QKeySequence(Qt::Key_F1));
+    connect(m_helpAction, &QAction::triggered, this, [this]() {
+        ui->tabWidget->setCurrentIndex(1); // Help tab is at index 1
+    });
+    this->addAction(m_helpAction);
+
+    m_quitAction_2 = new QAction(tr("&Quit"), this);
+    m_quitAction_2->setShortcut(QKeySequence("Ctrl+Q"));
+    connect(m_quitAction_2, &QAction::triggered, this, &MainWindow::close);
+    ui->menuFile->addAction(m_quitAction_2);
 
     connect(ui->cmbTopics,
             QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -183,6 +197,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lblVersion->setText(version);
 
     checkForNewVersion();
+
+    setStatusBarMessage(tr("Application started."));
 }
 
 void MainWindow::createTrayIcon()
@@ -232,6 +248,7 @@ void MainWindow::destroyTrayIcon()
 
 void MainWindow::onSettingChanged(const QString &param, const QVariant &value)
 {
+    setStatusBarMessage(tr("Setting '%1' changed to '%2'.").arg(param).arg(value.toString()));
     if (param == "minimizeToTray") {
         if (value.toBool()) {
             createTrayIcon();
@@ -244,6 +261,7 @@ void MainWindow::onSettingChanged(const QString &param, const QVariant &value)
 void MainWindow::checkForNewVersion()
 {
     QString localCommitHash = QString(APP_VERSION_STRING).section('-', 1, 1); // Extract hash from "0.X-hash"
+    setStatusBarMessage(tr("Checking for new version. Current version: %1").arg(localCommitHash));
 
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
     connect(manager, &QNetworkAccessManager::finished, this, [=](QNetworkReply *reply) {
@@ -338,6 +356,7 @@ bool MainWindow::loadConfigFile(const QString &filePath)
     ui->lblEditFile->setText(filePath);
     updateFileSizeLabel();
 
+    setStatusBarMessage(tr("Configuration loaded from %1").arg(filePath));
     return true;
 }
 
@@ -348,6 +367,27 @@ void MainWindow::on_actionOpen_triggered()
     qDebug() << "Selected file path:" << filePath;
     if (!filePath.isEmpty()) {
         loadConfigFile(filePath);
+    }
+}
+
+#include <QDateTime>
+#include <QTextStream>
+
+void MainWindow::setStatusBarMessage(const QString &message)
+{
+    if (m_statusLabel) {
+        m_statusLabel->setText(message);
+    }
+
+    if (m_statusBarTimer) {
+        m_statusBarTimer->start();
+    }
+
+    QString logFilePath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/.Quish/quish.log";
+    QFile logFile(logFilePath);
+    if (logFile.open(QIODevice::Append | QIODevice::Text)) {
+        QTextStream out(&logFile);
+        out << QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss") << " - " << message << "\n";
     }
 }
 
@@ -369,10 +409,7 @@ void MainWindow::on_btnSaveFile_clicked()
     out << contentToSave;
     file.close();
 
-    m_statusLabel->setText(tr("Configuration saved to %1").arg(m_currentConfigFilePath));
-    if (m_statusBarTimer) {
-        m_statusBarTimer->start(); // Use the interval set by the setting
-    }
+    setStatusBarMessage(tr("Configuration saved to %1").arg(m_currentConfigFilePath));
     loadConfigFile(m_currentConfigFilePath);
     updateFileSizeLabel();
 }
@@ -690,6 +727,8 @@ void MainWindow::on_btnRun_clicked()
         return;
     }
 
+    setStatusBarMessage(tr("Executing command: %1").arg(commandLineForDisplay));
+
     if (lblCommand) {
         lblCommand->setText(commandLineForDisplay);
     }
@@ -750,12 +789,9 @@ void MainWindow::on_btnRun_clicked()
 
                         .arg(exitCode));
 
-                m_statusLabel->setText(
+                setStatusBarMessage(
 
                     QString("Finished with exit code %1 in %2 ms").arg(exitCode).arg(m_timer.elapsed()));
-                if (m_statusBarTimer) {
-                    m_statusBarTimer->start(); // Use the interval set by the setting
-                }
 
                 if (m_lblExitCode) {
                     m_lblExitCode->setText(QString("Exit Code: %1").arg(exitCode));
@@ -888,6 +924,7 @@ void MainWindow::clearStatusBarMessage()
 
 void MainWindow::on_tabWidget_currentChanged(int index)
 {
+    setStatusBarMessage(tr("Switched to tab: %1").arg(ui->tabWidget->tabText(index)));
     // Assuming 'Edit' tab is at index 2 (Output is 0, Help is 1)
     if (index == 2) {
         scrollToCurrentCommandInEditor();
@@ -1125,7 +1162,7 @@ void MainWindow::on_btnBreak_clicked()
 {
     if (m_process && m_process->state() == QProcess::Running) {
         m_process->terminate();
-        m_statusLabel->setText(tr("Process terminated."));
+        setStatusBarMessage(tr("Process terminated."));
     }
 }
 
@@ -1167,6 +1204,55 @@ void MainWindow::on_btnSaveCommand_clicked()
         ui->cmbTopics->setCurrentText(selectedTopic);
         ui->cmbCommands->setCurrentText(newCommand["name"].toString());
     }
+}
+
+void MainWindow::on_btnImportJSON_clicked()
+{
+    QString importFilePath = QFileDialog::getOpenFileName(this, tr("Import JSON File"), "", tr("JSON Files (*.json)"));
+    if (importFilePath.isEmpty()) {
+        return;
+    }
+
+    QFile importFile(importFilePath);
+    if (!importFile.open(QIODevice::ReadOnly)) {
+        QMessageBox::critical(this, tr("Error"), tr("Could not open import file: %1").arg(importFilePath));
+        return;
+    }
+
+    QByteArray importData = importFile.readAll();
+    QJsonDocument importDoc = QJsonDocument::fromJson(importData);
+    if (importDoc.isNull() || !importDoc.isObject()) {
+        QMessageBox::critical(this, tr("Error"), tr("Invalid JSON in import file: %1").arg(importFilePath));
+        return;
+    }
+
+    QJsonObject importObject = importDoc.object();
+
+    // Assuming m_rootConfig is the currently loaded config
+    for (auto it = importObject.begin(); it != importObject.end(); ++it) {
+        m_rootConfig[it.key()] = it.value();
+    }
+
+    // Save the merged configuration back to the current config file
+    if (m_currentConfigFilePath.isEmpty()) {
+        QMessageBox::warning(this, tr("Warning"), tr("No main configuration file loaded. Cannot save merged configuration."));
+        return;
+    }
+
+    QFile configFile(m_currentConfigFilePath);
+    if (!configFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        QMessageBox::critical(this, tr("Error"), tr("Could not open configuration file for writing: %1").arg(m_currentConfigFilePath));
+        return;
+    }
+
+    QJsonDocument newConfigDoc(m_rootConfig);
+    configFile.write(newConfigDoc.toJson(QJsonDocument::Indented));
+    configFile.close();
+
+    // Reload the configuration to update the UI
+    loadConfigFile(m_currentConfigFilePath);
+
+    setStatusBarMessage(tr("Successfully imported and merged from %1").arg(importFilePath));
 }
 
 void MainWindow::on_btnClear_clicked()
@@ -1235,6 +1321,7 @@ void MainWindow::clearForm()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+    setStatusBarMessage(tr("Application closing."));
     QSettings settings("MyCompany", "Quish");
     settings.setValue("geometry", saveGeometry());
     settings.setValue("windowState", saveState());

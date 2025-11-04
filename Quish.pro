@@ -37,3 +37,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 RESOURCES += \
    Quish.qrc
+
+# Installation
+desktop.path = /usr/share/applications
+desktop.files = Quish.desktop
+INSTALLS += desktop

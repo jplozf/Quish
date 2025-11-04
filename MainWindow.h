@@ -67,6 +67,7 @@ private slots:
     void updateCommandLineLabel();
     void on_tabWidget_currentChanged(int index);
     void clearStatusBarMessage();
+    void on_btnImportJSON_clicked();
 private:
     QString buildCommandLine();
     void createTrayIcon();
@@ -76,6 +77,7 @@ private:
     void clearForm();
     void applyTheme(const QString &themeName);
     void closeEvent(QCloseEvent *event) override;
+    void setStatusBarMessage(const QString &message);
 
     void scrollToCurrentCommandInEditor();
 
@@ -92,6 +94,8 @@ private:
     QAction *m_runAction;
     QAction *m_breakAction;
     QAction *m_saveAction;
+    QAction *m_helpAction;
+    QAction *m_quitAction_2;
     JsonHighlighter *m_highlighter;
     QSystemTrayIcon *m_trayIcon;
     QMenu *m_trayMenu;

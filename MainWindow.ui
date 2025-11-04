@@ -38,7 +38,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>223</width>
+             <width>237</width>
              <height>288</height>
             </rect>
            </property>
@@ -217,9 +217,13 @@
                  </widget>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="pushButton">
+                 <widget class="QPushButton" name="btnImportJSON">
                   <property name="text">
-                   <string>PushButton</string>
+                   <string/>
+                  </property>
+                  <property name="icon">
+                   <iconset resource="Quish.qrc">
+                    <normaloff>:/icons/Download.png</normaloff>:/icons/Download.png</iconset>
                   </property>
                  </widget>
                 </item>
