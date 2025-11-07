@@ -210,6 +210,22 @@ void SaveCommandDialog::setWidgets(QWidget *scrollAreaWidgetContents)
             currentRow++;
         }
     }
+
+    QLineEdit *miscLineEdit = scrollAreaWidgetContents->findChild<QLineEdit*>("miscLineEdit");
+    if (miscLineEdit) {
+        QCheckBox *dialogCheckBox = new QCheckBox(this);
+        m_widgets.append(miscLineEdit);
+        m_checkBoxes.append(dialogCheckBox);
+
+        QLabel *nameLabel = new QLabel(tr("Misc"), this);
+        QLabel *valueLabel = new QLabel(miscLineEdit->text().isEmpty() ? "[empty]" : miscLineEdit->text(), this);
+        valueLabel->setStyleSheet("font-style: italic;");
+
+        m_dialogGridLayout->addWidget(nameLabel, currentRow, 0);
+        m_dialogGridLayout->addWidget(valueLabel, currentRow, 1);
+        m_dialogGridLayout->addWidget(dialogCheckBox, currentRow, 2);
+        currentRow++;
+    }
 }
 
 void SaveCommandDialog::onOkClicked()
@@ -234,6 +250,16 @@ void SaveCommandDialog::onOkClicked()
         // The working directory is a QWidget container holding the actual QLineEdit
         if (widget->objectName() == "m_workingDirectoryLineEdit") {
             m_newCommand["working_directory"] = qobject_cast<QLineEdit*>(widget)->text();
+            continue;
+        }
+
+        if (widget->objectName() == "miscLineEdit") {
+            QJsonObject miscArg;
+            miscArg["name"] = "Misc";
+            miscArg["type"] = "raw_string";
+            miscArg["flag"] = "";
+            miscArg["default"] = qobject_cast<QLineEdit*>(widget)->text();
+            arguments.append(miscArg);
             continue;
         }
 

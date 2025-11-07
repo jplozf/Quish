@@ -596,6 +596,7 @@ void MainWindow::buildUi(const QJsonObject &config)
             QWidget *widget = new QWidget(ui->scrollAreaWidgetContents);
             QHBoxLayout *hLayout = new QHBoxLayout(widget);
             QLineEdit *lineEdit = new QLineEdit(this);
+            lineEdit->setInputMethodHints(Qt::ImhNone);
             if (arg.contains("default")) {
                 lineEdit->setText(arg["default"].toString());
             }
@@ -671,6 +672,7 @@ void MainWindow::buildUi(const QJsonObject &config)
             QLabel *label = new QLabel(name, ui->scrollAreaWidgetContents);
             label->setStyleSheet(styleSheet);
             QLineEdit *lineEdit = new QLineEdit(ui->scrollAreaWidgetContents);
+            lineEdit->setInputMethodHints(Qt::ImhNone);
             if (arg.contains("default")) {
                 lineEdit->setText(arg["default"].toString());
             }
@@ -685,11 +687,10 @@ void MainWindow::buildUi(const QJsonObject &config)
             QLabel *label = new QLabel(name, ui->scrollAreaWidgetContents);
             label->setStyleSheet(styleSheet);
             QLineEdit *lineEdit = new QLineEdit(ui->scrollAreaWidgetContents);
+            lineEdit->setInputMethodHints(Qt::ImhNone);
             if (arg.contains("default")) {
                 lineEdit->setText(QString::number(arg["default"].toInt()));
             }
-            lineEdit->setStyleSheet(styleSheet);
-            lineEdit->setValidator(new QIntValidator(this));
             layout->addRow(label, lineEdit);
             connect(lineEdit, &QLineEdit::textChanged, this, &MainWindow::updateCommandLineLabel);
             lineEdit->setProperty("argType", type);
@@ -707,9 +708,21 @@ void MainWindow::buildUi(const QJsonObject &config)
             checkBox->setProperty("argType", type);
             checkBox->setProperty("argFlag", arg["flag"].toString());
             checkBox->setProperty("argName", name);
-            checkBox->setProperty("mandatory", mandatory);
         }
     }
+
+    QFrame *line2 = new QFrame();
+    line2->setFrameShape(QFrame::HLine);
+    line2->setFrameShadow(QFrame::Sunken);
+    layout->addRow(line2);
+
+    QLabel *miscLabel = new QLabel(tr("Misc"), ui->scrollAreaWidgetContents);
+    QLineEdit *miscLineEdit = new QLineEdit(ui->scrollAreaWidgetContents);
+    miscLineEdit->setObjectName("miscLineEdit");
+    miscLineEdit->setInputMethodHints(Qt::ImhNone);
+    layout->addRow(miscLabel, miscLineEdit);
+    connect(miscLineEdit, &QLineEdit::textChanged, this, &MainWindow::updateCommandLineLabel);
+    miscLineEdit->setProperty("argType", "raw_string");
 }
 
 void MainWindow::applyTheme(const QString &themeName)
@@ -831,13 +844,8 @@ void MainWindow::on_btnRun_clicked()
 
 
 
-    QStringList commandParts = commandLineForExecution.split(" ");
-
-    QString program = commandParts.takeFirst();
-
     m_process->setWorkingDirectory(m_workingDirectoryLineEdit->text());
-
-    m_process->start(program, commandParts);
+    m_process->start("/bin/sh", QStringList() << "-c" << commandLineForExecution);
 }
 
 
@@ -1180,11 +1188,29 @@ QString MainWindow::buildCommandLine()
 
         }
 
+        }
+
+    
+
+        QLineEdit *miscLineEdit = ui->scrollAreaWidgetContents->findChild<QLineEdit*>("miscLineEdit");
+
+        if (miscLineEdit) {
+
+            QString miscValue = miscLineEdit->text();
+
+            if (!miscValue.isEmpty()) {
+
+                commandLine += " " + miscValue;
+
+            }
+
+        }
+
+    
+
+        return commandLine;
+
     }
-
-    return commandLine;
-
-}
 
 void MainWindow::on_btnBreak_clicked()
 {
